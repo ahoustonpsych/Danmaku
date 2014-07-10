@@ -58,11 +58,17 @@ KYoffset:	db $0c,$0c,$0c,$0c,$0c,$0c,$0b,$0b,$0b,$0b,$0a,$0a,$0a,$09,$09,$09
 		db $0b,$0b,$0b,$0b,$0c,$0c,$0c,$0c,$0c,$0c
 
 
-Xoffsets:	db $1a,$14,$24,$00,$10,$20,$30,$00,$10,$20,$30,$40,$00,$10,$20,$30
+; Xoffsets:	db $1a,$14,$24,$00,$10,$20,$30,$00,$10,$20,$30,$40,$00,$10,$20,$30
+Xoffsets:	db $00,$10,$20,$30,$00,$10,$20,$30,$00,$10,$20,$30,$00,$10,$20,$30
 
-Yoffsets:	db $00,$10,$10,$20,$20,$20,$20,$30,$30,$30,$30,$30,$40,$40,$40,$40
+; Yoffsets:	db $00,$10,$10,$20,$20,$20,$20,$30,$30,$30,$30,$30,$40,$40,$40,$40
+Yoffsets: 	db $00,$00,$00,$00,$10,$10,$10,$10,$20,$20,$20,$20,$30,$30,$30,$30
 
-Tiles:		db $00,$20,$22,$40,$42,$44,$46,$60,$62,$64,$66,$68,$02,$04,$06,$08
+;Tiles:		db $00,$20,$22,$40,$42,$44,$46,$60,$62,$64,$66,$68,$02,$04,$06,$08
+Tiles: 		db $00,$02,$04,$06
+		db $20,$22,$24,$26
+		db $40,$42,$44,$46
+		db $60,$62,$64,$66
 
 BXoffsets:	db $00,$08,$10,$18,$20,$28,$30,$38,$40,$48,$50,$58,$60,$68,$70,$78,$80
 
@@ -347,7 +353,7 @@ DoHorizontalShot:
 	STA $0f
 
 	;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
-	%ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$0a,#$00)
+	%ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
 
 	BRA SkipThisThingy01
 
@@ -477,13 +483,13 @@ SkipThisThingy02:
 	STA $0f
 
 
-	%ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$0a,#$00)
+	%ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
 
 	;ShootBulletAngle(Angle,Speed,xPos,YPos,xAccel,YAccel,Type,Info)
-	%ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
-	%ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
-	%ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
-	%ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
+	%ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+	%ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+	%ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+	%ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
 
 	REP #$20
 
@@ -951,7 +957,7 @@ SUB_GFX:        JSR GET_DRAW_INFO       ; after: Y = index to sprite OAM ($300)
 		LDA Tiles,x	; set tile number
 		STA $0302,y
 
-		LDA #$0F	; get sprite palette info
+		LDA #$09	; get sprite palette info
 		STA $0303,y	; set properties
 
 		INY		; get the index to the next slot of the OAM
