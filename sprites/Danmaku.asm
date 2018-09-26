@@ -245,7 +245,7 @@ Attack3:
     print pc," Begin Attack ",!currentCard
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     REP #$20
-    LDA !timer        
+    LDA !timer
     CMP #$ffff                          ; If timer is #$FFFF (rolled over from #$00)
     BNE DontEndCard01                   ; End the spellcard
 
@@ -256,7 +256,7 @@ Attack3:
     STA !angle3                         ;
     STA !angle4                         ;
 
-    SEP #$20    
+    SEP #$20
 
     STZ !state                          ; Stop firing bullets
     REP #$20                            ;
@@ -269,37 +269,39 @@ Attack3:
 
 
 DontEndCard01:
-    SEP #$20
-    LDA $13                             ;
-    AND #$07                            ;
-    ; CMP #$07                          ;
-    BEQ Spell01PrematureEnd2            ;
+    SEP #$20                            ;\ \
+    LDA $13                             ; | |
+    AND #$07                            ; | | shoot bullets every 8 frames
+    ; CMP #$07                          ; | |
+    BEQ Spell01PrematureEnd2            ; |/
+                                        ; |   Alternate between horizontal/vertical shots every 8 frames
+    LDA $13                             ; |\
+    AND #$0f                            ; | | shoot horizontal shot every 16 frames
+    ; CMP #$0f                          ; | |
+    BEQ DoHorizontalShot                ;/ /
 
-    LDA $13                             ;
-    AND #$0f                            ;
-    ; CMP #$0f                          ;
-    BEQ DoHorizontalShot                ;
     STZ $0D9C
-    LDA $7e                             ; Calculate the player's x-position
-    CLC                                 ;
-    ADC #$02                            ;
-    STA $0f                             ; $0F is the player's current x-position, plus two (hitbox I guess)
+    LDA $7e                             ;\
+    CLC                                 ; | Calculate the player's x-position
+    ADC #$02                            ; |
+    STA $0f                             ;/  $0F is the player's current x-position, plus two (hitbox I guess)
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; First spellcard; set up all of the initial bullet settings
+    ; shoots at the same x-pos as mario (vertical shot)
     %ShootBulletXY(#$00,#$1D,$0f,#$00,#$00,#$00,#$0A,#$00)
     BRA SkipThisThingy01
 
 DoHorizontalShot:
-    STZ $0D9C
-    LDA $80
-    CLC
-    ADC #$10
-    STA $0f
+    STZ $0D9C                           ;\
+    LDA $80                             ; |
+    CLC                                 ; | Calculate player's y-position
+    ADC #$10                            ; |
+    STA $0f                             ;/  $0F is the player's current y-position, plus two (hitbox I guess)
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
+    ; shoots at the same y-pos as mario (horizontal shot)
     %ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
-
     BRA SkipThisThingy01
 
 Spell01PrematureEnd2:
@@ -310,14 +312,15 @@ SkipThisThingy01:
     AND #$0f                            ; | Shoot once every 16 frames
     CMP #$0f                            ; |
     BNE Spell01PrematureEnd2            ;/
-    
+
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
+    ; shoot bullets at various speeds every 16 frames
     %ShootBulletXY(#$00,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)        ;\
     %ShootBulletXY(#$07,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)        ; |
     %ShootBulletXY(#$10,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)        ; | Set up the spellcard
     %ShootBulletXY(#$F8,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)        ; |
     %ShootBulletXY(#$F0,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)        ;/
-    
+
     ;ShootBulletAngle(Angle,Speed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; %ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
     ; %ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
@@ -364,7 +367,7 @@ SkipThisThingy01:
 ; DontResetAngle4:
 
 ;     SEP #$20
-    
+
 
     ;%ShootBulletAngle(!angle,#$07,#$7F,#$7F,#$FF,#$FF,#$0A,#$00)
     ;%ShootBulletAngle(!angle2,#$07,#$7F,#$7F,#$03,#$03,#$0A,#$00)
@@ -374,59 +377,60 @@ Spell01PrematureEnd:
 
 
 ;Spellcard1:
-
 Attack1:
-    REP #$20
-    LDA !timer                          ;
-    CMP #$ffff                          ; End spellcard if time has run out.
-    BNE DontEndCard02                   ;
+    REP #$20                            ;\
+    LDA !timer                          ; |
+    CMP #$ffff                          ; | End spellcard if time has run out
+    BNE DontEndCard02                   ; |
+    SEP #$20                            ;/
+    STZ !state                          ; Set idle
+    REP #$20                            ;\
+    LDA #$0050                          ; | Next spellcard duration
+    STA !timer                          ;/
     SEP #$20                            ;
-    STZ !state                          ; Idle
-    REP #$20                            ;
-    LDA #$0050                          ; This is the amount of time the next spellcard will last for.
-    STA !timer                          ;
-    SEP #$20                            ;
-    LDA #$f0                            ;
-    STA !stateTimer                     ; Idle time
-    INC !currentCard                    ; Next spellcard
+    LDA #$f0                            ;\ Idle time
+    STA !stateTimer                     ;/
+    INC !currentCard                    ; Begin next spellcard next frame
 
 DontEndCard02:
-    REP #$20
-    LDA !timer
-    CMP #$0078
-    BCS WaitLonger
+    REP #$20                            ;\
+    LDA !timer                          ; | Fire slower bullets for the first second or so of this attack
+    CMP #$0078                          ; |
+    BCS WaitLonger                      ;/
 
-    SEP #$20
-    LDA #$2f
-    STA $0e
-    LDA $13
-    AND #$07
-    ; CMP #$07
-    BEQ Spell02PrematureEnd2
-    BRA SkipThisThingy02
+    SEP #$20                            ;
+    LDA #$2f                            ;\ Set bullet speed
+    STA $0e                             ;/
+
+    LDA $13                             ;\
+    AND #$07                            ; | Shoot bullets every 8 frames
+    ; CMP #$07                          ; |
+    BEQ Spell02PrematureEnd2            ;/
+                                        ;
+    BRA SkipThisThingy02                ;
 
 WaitLonger:
-    SEP #$20
-    LDA #$17
-    STA $0e
+    SEP #$20                            ;
+    LDA #$17                            ;\ Set bullet speed
+    STA $0e                             ;/
 
-    LDA $13
-    AND #$0f
-    ; CMP #$0f
-    BEQ Spell02PrematureEnd2
-
-    BRA SkipThisThingy02
+    LDA $13                             ;\
+    AND #$0f                            ; | Shoot bullets every 16 frames
+    ; CMP #$0f                          ; |
+    BEQ Spell02PrematureEnd2            ;/
+                                        ;
+    BRA SkipThisThingy02                ;
 
 Spell02PrematureEnd2:
     BRL Spell02PrematureEnd
 
 SkipThisThingy02:
-    LDA $80
-    CLC
-    ADC #$10
-    STA $0f
+    LDA $80                             ;\
+    CLC                                 ; | Calculate player's y-pos
+    ADC #$10                            ; |
+    STA $0f                             ;/  $0F is the player's current y-position, plus two (hitbox I guess)
 
-
+    ; shoot horizontal bullets toward mario
     %ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
 
     ;ShootBulletAngle(Angle,Speed,xPos,YPos,xAccel,YAccel,Type,Info)
@@ -436,40 +440,40 @@ SkipThisThingy02:
     ;%ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
 
     REP #$20
-    LDA !angle1                         ;
-    CLC                                 ;
-    ADC #$0005                          ; increase angle by #$0005 every shot
-    STA !angle1                         ;
-    CMP #$0200                          ; Check if angle overflowed
-    BCC .DontResetAngle1                ; If not, let it continue
-    STZ !angle1                         ; Else, reset angle
+    LDA !angle1                         ;\
+    CLC                                 ; |
+    ADC #$0005                          ; |
+    STA !angle1                         ; | increase angle by #$0005 every shot
+    CMP #$0200                          ; |\
+    BCC .DontResetAngle1                ; | | prevent overflow
+    STZ !angle1                         ;/ /
 
 .DontResetAngle1
-    LDA !angle2                         ;
-    SEC                                 ;
-    SBC #$0005                          ; decrease angle by #$0005 every shot
-    STA !angle2                         ;
-    BCS .DontResetAngle2                ;
-    LDA #$01ff                          ;
-    STA !angle2                         ;
+    LDA !angle2                         ;\
+    SEC                                 ; |
+    SBC #$0005                          ; |
+    STA !angle2                         ; | decrease angle by #$0005 every shot
+    BCS .DontResetAngle2                ; |\
+    LDA #$01ff                          ; | | prevent underflow
+    STA !angle2                         ;/ /
 
 .DontResetAngle2
-    LDA !angle3                         ;
-    CLC                                 ;
-    ADC #$0005                          ; increase angle by #$0005 every shot
-    STA !angle3                         ;
-    CMP #$0200                          ;
-    BCC .DontResetAngle3                ;
-    STZ !angle3                         ;
+    LDA !angle3                         ;\
+    CLC                                 ; |
+    ADC #$0005                          ; |
+    STA !angle3                         ; | increase angle by #$0005 every shot
+    CMP #$0200                          ; |\
+    BCC .DontResetAngle3                ; | | prevent overflow
+    STZ !angle3                         ;/ /
 
 .DontResetAngle3
-    LDA !angle4                         ;
-    SEC                                 ;
-    SBC #$0005                          ; decrease angle by #$0005 every shot
-    STA !angle4                         ;
-    BCS .DontResetAngle4                ;
-    LDA #$01ff                          ;
-    STA !angle4                         ;
+    LDA !angle4                         ;\
+    SEC                                 ; |
+    SBC #$0005                          ; |
+    STA !angle4                         ; | decrease angle by #$0005 every shot
+    BCS .DontResetAngle4                ; |\
+    LDA #$01ff                          ; | | prevent underflow
+    STA !angle4                         ;/ /
 
 .DontResetAngle4
     SEP #$20
@@ -533,168 +537,151 @@ MainRoutineStart:
 MainLoopPoint:
     ;STZ $0d9c
     INX
-    LDA #$FF
-    INC
-    LDA #$00
-    DEC
+    LDA #$FF                            ;\
+    INC                                 ; | Reset carry?
+    LDA #$00                            ; |
+    DEC                                 ;/
 
     ;CPX #$3F
     ;BNE .continue
     ;BRL BossGraphics
 
 .continue
-    LDA !bulletType,x
-    BEQ MainLoopPoint
+    LDA !bulletType,x                   ;\ Only process bullets that exist
+    BEQ MainLoopPoint                   ;/
 
-    LDA !bulletYSpeed,x
-    BMI YSpeedIsNegative
-    CLC
-    ADC !bulletYFrac,x
-    STA !bulletYFrac,x
-    LSR
-    LSR
-    LSR
-    LSR
-    CLC
-    ADC !bulletYPos,x
-    BCS DeleteBulletYbranch
-    STA !bulletYPos,x
-    CMP #$f0
-    BCS DeleteBulletYbranch
+    LDA !bulletYSpeed,x                 ;
+    BMI YSpeedIsNegative                ;
+    CLC                                 ;\
+    ADC !bulletYFrac,x                  ; | Add y-speed to y-subpixel
+    STA !bulletYFrac,x                  ;/
+    LSR                                 ;\
+    LSR                                 ; |
+    LSR                                 ; |
+    LSR                                 ; | Add y-subpixel to y-position if subpixel >16
+    CLC                                 ; |
+    ADC !bulletYPos,x                   ; |
+    BCS DeleteBulletYbranch             ; |
+    STA !bulletYPos,x                   ;/
+    CMP #$f0                            ;
+    BCS DeleteBulletYbranch             ;
 
-    LDA !bulletYFrac,x
-    CMP #$10
-    BCC DontResetYFrac
-    LDA !bulletYFrac,x
-    AND #$0f
-    STA !bulletYFrac,x
-
-    BRA DontResetYFrac
+    LDA !bulletYFrac,x                  ;\
+    CMP #$10                            ; |
+    BCC DontResetYFrac                  ; | Reset y-subpixel if >16
+    LDA !bulletYFrac,x                  ; |
+    AND #$0f                            ; |
+    STA !bulletYFrac,x                  ; |
+    BRA DontResetYFrac                  ;/
 
 DeleteBulletYbranch:
     BRL DeleteBulletXbranch
 
-
-
 YSpeedIsNegative:
-    CLC
-    ADC !bulletYFrac,x
-    STA !bulletYFrac,x
-    CMP #$10
-    BCC DontUpdateYPos
-    STA $00
-    ;AND #$f0
-    LSR
-    LSR
-    LSR
-    LSR
-    EOR #$0f
-    INC
-    STA $01
-    LDA !bulletYPos,x
-    SEC
-    SBC $01
-    BCC DeleteBulletYbranch
-    STA !bulletYPos,x
-    LDA $00
-    AND #$0f
-    STA !bulletYFrac,x
+    CLC                                 ;\
+    ADC !bulletYFrac,x                  ; | Add y-speed to y-subpixel
+    STA !bulletYFrac,x                  ;/
+    CMP #$10                            ;\
+    BCC DontUpdateYPos                  ; |
+    STA $00                             ;/
+    ;AND #$f0                           ;
+    LSR                                 ;\
+    LSR                                 ; |
+    LSR                                 ; |
+    LSR                                 ; |
+    EOR #$0f                            ; |
+    INC                                 ; | Subtract y-subpixel from y-position if >16
+    STA $01                             ; |
+    LDA !bulletYPos,x                   ; |
+    SEC                                 ; |
+    SBC $01                             ; |
+    BCC DeleteBulletYbranch             ; |
+    STA !bulletYPos,x                   ;/
+    LDA $00                             ;\
+    AND #$0f                            ; | Reset y-subpixel
+    STA !bulletYFrac,x                  ;/
 
 DontUpdateYPos:
 DontResetYFrac:                         ; I had to recode this section multiple times,
 DontResetYFrac2:                        ; AND I was too lazy to swap out the old labels.
 
+    LDA !bulletYAccel,x                 ;\
+    ;BMI YAccelIsNegative               ; |
+    CLC                                 ; | Add bullet y-acceleration to y-speed
+    ADC !bulletYSpeed,x                 ; |
+    ;BCS DoneWithYAccel                 ; |
+    STA !bulletYSpeed,x                 ;/
+    ;BRA DoneWithYAccel                 ;
+                                        ;
+    ;YAccelIsNegative:                  ;
+    ;CLC                                ;
+    ;ADC !bulletYSpeed,x                ;
+    ;BCC DoneWithYAccel                 ;
+    ;STA !bulletYSpeed,x                ;
 
+DoneWithYAccel:                         ; Now we handle horizontal movement
+    LDA !bulletXSpeed,x                 ;\
+    BMI XSpeedIsNegative                ; |
+    CLC                                 ; | Add x-speed to x-subpixel
+    ADC !bulletXFrac,x                  ; |
+    STA !bulletXFrac,x                  ;/
+    LSR                                 ;\
+    LSR                                 ; |
+    LSR                                 ; |
+    LSR                                 ; | Add x-subpixel to x-position if subpixel >16
+    CLC                                 ; |
+    ADC !bulletXPos,x                   ; |
+    BCS DeleteBulletXbranch             ; |
+    STA !bulletXPos,x                   ;/
 
-    LDA !bulletYAccel,x
-    ;BMI YAccelIsNegative
-    CLC
-    ADC !bulletYSpeed,x
-    ;BCS DoneWithYAccel
-    STA !bulletYSpeed,x
-    ;BRA DoneWithYAccel
-
-    ;YAccelIsNegative:
-    ;CLC
-    ;ADC !bulletYSpeed,x
-    ;BCC DoneWithYAccel
-    ;STA !bulletYSpeed,x
-
-DoneWithYAccel:
-
-                                        ; Now we handle horizontal movement.
-    LDA !bulletXSpeed,x
-    BMI XSpeedIsNegative
-    CLC
-    ADC !bulletXFrac,x
-    STA !bulletXFrac,x
-    LSR
-    LSR
-    LSR
-    LSR
-    CLC
-    ADC !bulletXPos,x
-    BCS DeleteBulletXbranch
-    STA !bulletXPos,x
-
-    LDA !bulletXFrac,x
-    CMP #$10
-    BCC DontResetXFrac
-    LDA !bulletXFrac,x
-    AND #$0f
-    STA !bulletXFrac,x
-    BRA DontResetXFrac
-
-
-
-
+    LDA !bulletXFrac,x                  ;\
+    CMP #$10                            ; |
+    BCC DontResetXFrac                  ; |
+    LDA !bulletXFrac,x                  ; | Reset x-subpixel
+    AND #$0f                            ; |
+    STA !bulletXFrac,x                  ; |
+    BRA DontResetXFrac                  ;/
 
 XSpeedIsNegative:
-    CLC
-    ADC !bulletXFrac,x
-    STA !bulletXFrac,x
-    CMP #$10
-    BCC DontUpdateXPos
-    STA $00
-    ;AND #$f0
-    LSR
-    LSR
-    LSR
-    LSR
-    EOR #$0f
-    INC
-    STA $01
-    LDA !bulletXPos,x
-    SEC
-    SBC $01
-    BCC DeleteBulletXbranch
-    STA !bulletXPos,x
-    LDA $00
-    AND #$0f
-    STA !bulletXFrac,x
-    BRA DontUpdateXPos
+    CLC                                 ;\
+    ADC !bulletXFrac,x                  ; | Add x-speed to x-subpixel
+    STA !bulletXFrac,x                  ;/
+    CMP #$10                            ;\
+    BCC DontUpdateXPos                  ; |
+    STA $00                             ;/
+    ;AND #$f0                           ;
+    LSR                                 ;\
+    LSR                                 ; |
+    LSR                                 ; |
+    LSR                                 ; |
+    EOR #$0f                            ; |
+    INC                                 ; | Subtrace x-subpixel from x-position
+    STA $01                             ; |
+    LDA !bulletXPos,x                   ; |
+    SEC                                 ; |
+    SBC $01                             ; |
+    BCC DeleteBulletXbranch             ; |
+    STA !bulletXPos,x                   ;/
+    LDA $00                             ;\
+    AND #$0f                            ; | Reset x-subpixel
+    STA !bulletXFrac,x                  ; |
+    BRA DontUpdateXPos                  ;/
+
 DeleteBulletXbranch:
-    LDA #$00
-    STA !bulletType,x
+    LDA #$00                            ;\ Delete bullet (clear type)
+    STA !bulletType,x                   ;/
+
+
+
 DontUpdateXPos:
-
-
-
-
-
-
-
-
-
 DontResetXFrac:
 DontResetXFrac2:
 DoneMessingWithXSpeed:
+    LDA !bulletXAccel,x                 ;\
+    CLC                                 ; | Add bullet x-acceleration to x-speed
+    ADC !bulletXSpeed,x                 ; |
+    STA !bulletXSpeed,x                 ;/
 
-
-    LDA !bulletXAccel,x
-    CLC
-    ADC !bulletXSpeed,x
-    STA !bulletXSpeed,x
     ;LDA !bulletYPos,x
     ;CMP #$F0
     ;BCC IsntOutOfBounds
@@ -706,12 +693,12 @@ IsntOutOfBounds:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Hit Detection Routine
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    
-    ;CPX #$00
-    ;BNE IsntZero
-    ;LDA !bulletType,x
-    ;BEQ IsntZero
-    ;STZ $0d9c
+
+    CPX #$00                            ;\
+    BNE IsntZero                        ; | Process hit detection for all bullets
+    LDA !bulletType,x                   ; |
+    BEQ IsntZero                        ;/
+    STZ $0d9c                           ;
 
     ;LDA $0d9c
     ;BNE FirstHalf
@@ -723,67 +710,65 @@ FirstHalf:
     ;BRA EndHitDetection
 
 IsntZero:
-    TXA
-    EOR $13
-    AND #$01
-    BNE EndHitDetection
+    TXA                                 ;\
+    EOR $13                             ; | Process hit detection every other frame
+    AND #$01                            ; |
+    BNE EndHitDetection                 ;/
+    LDA !bulletXPos,x                   ;\
+    STA !bulletLocation                 ; |
+    STZ !bulletLocation+1               ; |
+    REP #$21                            ; | Update bulletLocation x-position
+    LDA !bulletLocation                 ; |
+    ;CLC                                ; |
+    ADC #$0004                          ; |
+    STA !bulletLocation                 ;/
 
-    LDA !bulletXPos,x
-    STA !bulletLocation
-    STZ !bulletLocation+1
-    REP #$21
-    LDA !bulletLocation
-    ;CLC
-    ADC #$0004
-    STA !bulletLocation
 
-    LDA $94
-    CLC
-    ADC #$0007
-    SEC 
-    SBC !bulletLocation
-    BMI XResultIsNegative
-    CMP #$0004
-    BCS DontHurtMario
-    BRA MaybeHurtMario
-
-XResultIsNegative:
-    EOR #$ffff
-    INC
-    CMP #$0007
-    BCS DontHurtMario
+    LDA $94                             ;\
+    CLC                                 ; |
+    ADC #$0007                          ; |
+    SEC                                 ; |
+    SBC !bulletLocation                 ; | Detect if bullet will be within 2 pixels of mario (next frame)
+    BMI XResultIsNegative               ; |
+    CMP #$0004                          ; |
+    BCS DontHurtMario                   ; |
+    BRA MaybeHurtMario                  ; |
+                                        ; |
+XResultIsNegative:                      ; |
+    EOR #$ffff                          ; |\
+    INC                                 ; | | Negative x-speed handler (bullet to left of mario)
+    CMP #$0007                          ; | |
+    BCS DontHurtMario                   ;/ /
 
 MaybeHurtMario:
-    LDA !bulletYPos,x
-    STA !bulletLocation
-    STZ !bulletLocation+1
-    REP #$21
-    LDA !bulletLocation
-    ;CLC
-    ADC #$0004
-    STA !bulletLocation
+    LDA !bulletYPos,x                   ;\
+    STA !bulletLocation                 ; |
+    STZ !bulletLocation+1               ; |
+    REP #$21                            ; | Update bulletLocation y-position
+    LDA !bulletLocation                 ; |
+    ;CLC                                ; |
+    ADC #$0004                          ; |
+    STA !bulletLocation                 ;/
 
-    LDA $96
-    CLC
-    ADC #$0013
-    SEC 
-    SBC !bulletLocation
-    BMI YResultIsNegative
-    CMP #$0004
-    BCS DontHurtMario
-    BRA HurtMario
-
-YResultIsNegative:
-    EOR #$ffff
-    INC
-    CMP #$0007
-    BCS DontHurtMario
-
+    LDA $96                             ;\
+    CLC                                 ; |
+    ADC #$0013                          ; |
+    SEC                                 ; |
+    SBC !bulletLocation                 ; | Detect if bullet y-position will be within 2 pixels of mario (next frame)
+    BMI YResultIsNegative               ; |
+    CMP #$0004                          ; |
+    BCS DontHurtMario                   ; |
+    BRA HurtMario                       ; |
+                                        ; |
+YResultIsNegative:                      ; |
+    EOR #$ffff                          ; |\
+    INC                                 ; | | Negative y-speed handler (bullet above mario)
+    CMP #$0007                          ; | |
+    BCS DontHurtMario                   ;/ /
 
 HurtMario:
-    SEP #$20
-    JSL $00f5b7
-
+    SEP #$20                            ;\ Damage mario if touching bullet
+    JSL $00f5b7                         ;/
 
 DontHurtMario:
     SEP #$20
@@ -799,32 +784,31 @@ EndHitDetection:
 ;Granted, not much time, but still...
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    LDA !bulletType,x
-    BEQ NoGraphicsToShow
+    LDA !bulletType,x                   ;\ Only process bullets that exist
+    BEQ NoGraphicsToShow                ;/
 
-    CMP #$44                            ; Protection against overwriting Mario's sprite slots with bullets
-    BEQ NoGraphicsToShow
-    CMP #$45
-    BEQ NoGraphicsToShow
-
+    CMP #$44                            ;\
+    BEQ NoGraphicsToShow                ; | Protection against overwriting Mario's sprite slots with bullets
+    CMP #$45                            ; |
+    BEQ NoGraphicsToShow                ;/
 
     REP #$10
 
-    LDA !bulletXPos,x
-    STA $0204,y
+    LDA !bulletXPos,x                   ;\ Update sprite x-pos
+    STA $0204,y                         ;/
 
-    LDA !bulletYPos,x
-    STA $0205,y
+    LDA !bulletYPos,x                   ;\ Update bullet y-pos
+    STA $0205,y                         ;/
 
-    LDA !bulletType,x
-    STA $0206,y
+    LDA !bulletType,x                   ;\ Update bullet type
+    STA $0206,y                         ;/
 
-    LDA #$3d
-    STA $0207,y
-    INY
-    INY
-    INY
-    INY
+    LDA #$3d                            ;\ Set bullet sprite properties
+    STA $0207,y                         ;/
+    INY                                 ;\
+    INY                                 ; | Prepare OAM pointer for next bullet (+4 bytes)
+    INY                                 ; |
+    INY                                 ;/
     SEP #$10
 
 NoGraphicsToShow:
@@ -834,30 +818,30 @@ NoGraphicsToShow:
 ;End graphics routine
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    CPX #$7f
-    BEQ BossGraphics
-    BRL MainLoopPoint
+    CPX #$7f                            ;\
+    BEQ BossGraphics                    ; | Process boss when all 7F bullet slots are handled
+    BRL MainLoopPoint                   ;/
+
 BossGraphics:
+    LDA $0e                             ;\
+    CMP #$01                            ; |
+    BNE DontShowHitbox                  ;/
 
-    LDA $0e
-    CMP #$01
-    BNE DontShowHitbox
+    LDA $7e                             ;\
+    CLC                                 ; | Set boss x-position = mario's x-position + 4
+    ADC #$04                            ; |
+    STA !hitBoxOAM                      ;/
 
-    LDA $7e
-    CLC
-    ADC #$04
-    STA !hitBoxOAM
+    LDA $80                             ;\
+    CLC                                 ; | Set boss y-position = mario's y-position + 16
+    ADC #$10                            ; |
+    STA !hitBoxOAM+1                    ;/
 
-    LDA $80
-    CLC
-    ADC #$10
-    STA !hitBoxOAM+1
+    LDA #$1f                            ;\ Set boss tile number
+    STA !hitBoxOAM+2                    ;/
 
-    LDA #$1f
-    STA !hitBoxOAM+2
-
-    LDA #$3d
-    STA !hitBoxOAM+3
+    LDA #$3d                            ;\ Set boss YXPPCCCT properties
+    STA !hitBoxOAM+3                    ;/
 
 
 DontShowHitbox:
@@ -878,50 +862,50 @@ SUB_GFX:
                                         ;      $01 = sprite y position relative to screen border
 
     ;BRA Skip
-    PHX
+    PHX                                 ;
 
     ; if you wish to draw more than one tile
     ; each step between the lines must be repeated
     ;****************************************************
-    LDX #$FF
-    GraphicsLoop:
-    INX
+    LDX #$FF                            ;
+GraphicsLoop:
+    INX                                 ;
     LDA $00                             ; set x position of the tile
-    CLC
-    ADC Xoffsets,x
-    STA $0300,y
+    CLC                                 ;
+    ADC Xoffsets,x                      ;
+    STA $0300,y                         ;
 
     LDA $01                             ; set y position of the tile
-    CLC
-    ADC Yoffsets,x
-    PHY
-    LDY !bossYOffset
-    CLC
-    ADC KYoffset,y
-    PLY
-    STA $0301,y
+    CLC                                 ;
+    ADC Yoffsets,x                      ;
+    PHY                                 ;
+    LDY !bossYOffset                    ;
+    CLC                                 ;
+    ADC KYoffset,y                      ;
+    PLY                                 ;
+    STA $0301,y                         ;
 
     LDA Tiles,x                         ; set tile number
-    STA $0302,y
+    STA $0302,y                         ;
 
     LDA #$0F                            ; get sprite palette info
     STA $0303,y                         ; set properties
 
     INY                                 ; get the index to the next slot of the OAM
     INY                                 ; (this is needed if you wish to draw another tile)
-    INY
-    INY
-    CPX #$0F
-    BNE GraphicsLoop
+    INY                                 ;
+    INY                                 ;
+    CPX #$0F                            ;
+    BNE GraphicsLoop                    ;
     ;*************************************************************************************
 
     LDY #$02                            ; #$02 means the tiles are 16x16
     TXA                                 ; This means we drew one tile
-    PLX
+    PLX                                 ;
 
-    JSL $01B7B3
+    JSL $01B7B3                         ;
 
-    RTS
+    RTS                                 ;
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -942,7 +926,7 @@ SUB_GFX:
 ;
 ;       Y = index to sprite OAM ($300)
 ;       $00 = sprite x position relative to screen boarder
-;       $01 = sprite y position relative to screen boarder  
+;       $01 = sprite y position relative to screen boarder
 ;
 ; It is adapted from the subroutine at $03B760
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1040,11 +1024,11 @@ INVALID:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 FindBulletSlotXY:
-    STZ !numOfBullets
-    LDA !shotBullets
-    EOR #$01
-    STA !shotBullets
-    LDX #$00
+    STZ !numOfBullets                   ;\
+    LDA !shotBullets                    ; |
+    EOR #$01                            ; |
+    STA !shotBullets                    ; |
+    LDX #$00                            ;/
 
 FindLoopPoint:
     INX                                 ;\
@@ -1053,74 +1037,74 @@ FindLoopPoint:
     CPX #$45                            ; |
     BEQ BulletSlotNotAvailable          ;/
 
-    LDA !bulletType,x
-    BEQ ExitFindLoop
+    LDA !bulletType,x                   ;
+    BEQ ExitFindLoop                    ;
 
 
-    CPX #$7f
-    BNE FindLoopPoint
-    BRA NoSlotsAvailable
+    CPX #$7f                            ;
+    BNE FindLoopPoint                   ;
+    BRA NoSlotsAvailable                ;
 
 ExitFindLoop:
                                         ; This is where bullets are created.
-    LDA #$40                
-    STA $1DF9                           ; play sound effect
+    LDA #$40                            ;\ play sound effect
+    STA $1DF9                           ;/
 
-    LDA $00
-    STA !bulletXSpeed,x
-    LDA $01
-    STA !bulletYSpeed,x
-    LDA $02
-    STA !bulletXPos,x
-    LDA $03
-    STA !bulletYPos,x
-    LDA $04
-    STA !bulletXAccel,x
-    LDA $05
-    STA !bulletYAccel,x
-    LDA $06
-    STA !bulletType,x
-    LDA $07
-    STA !bulletInfo,x
-    LDA #$07
-    STA !bulletXFrac,x
-    STA !bulletYFrac,x
+    LDA $00                             ;
+    STA !bulletXSpeed,x                 ;
+    LDA $01                             ;
+    STA !bulletYSpeed,x                 ;
+    LDA $02                             ;
+    STA !bulletXPos,x                   ;
+    LDA $03                             ;
+    STA !bulletYPos,x                   ;
+    LDA $04                             ;
+    STA !bulletXAccel,x                 ;
+    LDA $05                             ;
+    STA !bulletYAccel,x                 ;
+    LDA $06                             ;
+    STA !bulletType,x                   ;
+    LDA $07                             ;
+    STA !bulletInfo,x                   ;
+    LDA #$07                            ;
+    STA !bulletXFrac,x                  ;
+    STA !bulletYFrac,x                  ;
 
 NoSlotsAvailable:
-    RTS
+    RTS                                 ;
 
 BulletSlotNotAvailable:
-    LDA #$00
-    STA !bulletType,x
-    BRL FindLoopPoint2
+    LDA #$00                            ;
+    STA !bulletType,x                   ;
+    BRL FindLoopPoint2                  ;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;Used to find an empty slot for a bullet.                 ;;;
-;;;Essentially, call this whenever a shot is fired.              ;;;
-;;;Use JSR FindBulletSlotAngle or the macro below.              ;;;
-;;;                                      ;;;
-;;;To use, load the initial  speed  into $00                  ;;;
-;;;        load the initiay  angle  into $01 (00 - 01FF)          ;;;
-;;;       load the initial x pos.  into $03                    ;;;
-;;;       load the initial y pos.  into $04                  ;;;
-;;;       load the initial x accel into $05                  ;;;
-;;;       load the initial y accel into $06                  ;;;
-;;;       load the initial type    into $07                  ;;;
-;;;       load any  extra  info  into   $08                  ;;;
-;;;                                      ;;;
-;;;       This is macro-ified for easier coding.  To use,        ;;;
-;;;       type %ShootBulletAngle($00,$01,$02,$03,$04,$05,$06,$07)    ;;;
-;;;       replacing those values with your actual values.        ;;;
+;;;Used to find an empty slot for a bullet.                             ;;;
+;;;Essentially, call this whenever a shot is fired.                     ;;;
+;;;Use JSR FindBulletSlotAngle or the macro below.                      ;;;
+;;;                                                                     ;;;
+;;;To use, load the initial  speed  into $00                            ;;;
+;;;        load the initiay  angle  into $01 (00 - 01FF)                ;;;
+;;;       load the initial x pos.  into $03                             ;;;
+;;;       load the initial y pos.  into $04                             ;;;
+;;;       load the initial x accel into $05                             ;;;
+;;;       load the initial y accel into $06                             ;;;
+;;;       load the initial type    into $07                             ;;;
+;;;       load any  extra  info  into   $08                             ;;;
+;;;                                                                     ;;;
+;;;       This is macro-ified for easier coding.  To use,               ;;;
+;;;       type %ShootBulletAngle($00,$01,$02,$03,$04,$05,$06,$07)       ;;;
+;;;       replacing those values with your actual values.               ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 FindBulletSlotAngle:
 
-    STZ !numOfBullets
-    LDA !shotBullets
-    EOR #$01
-    STA !shotBullets
-    LDX #$00
+    STZ !numOfBullets                   ;
+    LDA !shotBullets                    ;
+    EOR #$01                            ;
+    STA !shotBullets                    ;
+    LDX #$00                            ;
 
 FindLoopPoint2:
     INX                                 ;\
@@ -1129,80 +1113,76 @@ FindLoopPoint2:
     CPX #$46                            ; |
     BEQ BulletSlotNotAvailable2         ;/  $140B
 
-    LDA !bulletType,x
-    BEQ ExitFindLoop2
+    LDA !bulletType,x                   ;
+    BEQ ExitFindLoop2                   ;
 
-
-
-    CPX #$7F
-    BNE FindLoopPoint2
-    BRA NoSlotsAvailable2
+    CPX #$7F                            ;
+    BNE FindLoopPoint2                  ;
+    BRA NoSlotsAvailable2               ;
 
 ExitFindLoop2:
                                         ; This is where bullets are created.
-    LDA #$40                
+    LDA #$40                            ;
     STA $1df9                           ; play sound effect
-    LDA $03
-    STA !bulletXPos,x
-    LDA $04
-    STA !bulletYPos,x
-    LDA $05
-    STA !bulletXAccel,x
-    LDA $06
-    STA !bulletYAccel,x
-    ;LDA $07
-    TXA
-    LSR
-    LSR
-    LSR
-    LSR
-    CLC
-    ADC #$0a
-    STA !bulletType,x
-    LDA $08
-    STA !bulletInfo,x
-    LDA #$07
-    STA !bulletXFrac,x
-    STA !bulletYFrac,x
+    LDA $03                             ;
+    STA !bulletXPos,x                   ;
+    LDA $04                             ;
+    STA !bulletYPos,x                   ;
+    LDA $05                             ;
+    STA !bulletXAccel,x                 ;
+    LDA $06                             ;
+    STA !bulletYAccel,x                 ;
+    ;LDA $07                            ;
+    TXA                                 ;
+    LSR                                 ;
+    LSR                                 ;
+    LSR                                 ;
+    LSR                                 ;
+    CLC                                 ;
+    ADC #$0a                            ;
+    STA !bulletType,x                   ;
+    LDA $08                             ;
+    STA !bulletInfo,x                   ;
+    LDA #$07                            ;
+    STA !bulletXFrac,x                  ;
+    STA !bulletYFrac,x                  ;
 
 
     JSL SIN                             ; These come last since they'll destroy the above values otherwise.
-    LDA $03
-    STA !bulletYSpeed,x
+    LDA $03                             ;
+    STA !bulletYSpeed,x                 ;
 
-    JSL COS
-    LDA $05
-    STA !bulletXSpeed,x
-
-
+    JSL COS                             ;
+    LDA $05                             ;
+    STA !bulletXSpeed,x                 ;
 
 NoSlotsAvailable2:
-    RTS
+    RTS                                 ;
 
 BulletSlotNotAvailable2:
-    LDA #$00
-    STA !bulletType,x
-    BRL FindLoopPoint2
+    LDA #$00                            ;
+    STA !bulletType,x                   ;
+    BRL FindLoopPoint2                  ;
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;Used to find an empty slot for a bullet.                  ;;;
-;;;Essentially, call this whenever a shot is fired.              ;;;
-;;;Use JSR FindBulletSlotAim or the macro below.              ;;;
-;;;                                      ;;;
-;;;To use, load the initial  speed  into $00                  ;;;
-;;;        load the initiay  angle  into $01 (00 - 01FF)          ;;;
-;;;       load the initial x pos.  into $03                    ;;;
-;;;       load the initial y pos.  into $04                  ;;;
-;;;       load the initial x accel into $05                  ;;;
-;;;       load the initial y accel into $06                  ;;;
-;;;       load the initial type    into $07                  ;;;
-;;;       load any  extra  info  into   $08                  ;;;
-;;;                                      ;;;
-;;;       This is macro-ified for easier coding.  To use,        ;;;
-;;;       type %ShootBulletAngle($00,$01,$02,$03,$04,$05,$06,$07)    ;;;
-;;;       replacing those values with your actual values.        ;;;
+;;;Used to find an empty slot for a bullet.                             ;;;
+;;;Essentially, call this whenever a shot is fired.                     ;;;
+;;;Use JSR FindBulletSlotAim or the macro below.                        ;;;
+;;;                                                                     ;;;
+;;;To use, load the initial  speed  into $00                            ;;;
+;;;        load the initiay  angle  into $01 (00 - 01FF)                ;;;
+;;;       load the initial x pos.  into $03                             ;;;
+;;;       load the initial y pos.  into $04                             ;;;
+;;;       load the initial x accel into $05                             ;;;
+;;;       load the initial y accel into $06                             ;;;
+;;;       load the initial type    into $07                             ;;;
+;;;       load any  extra  info  into   $08                             ;;;
+;;;                                                                     ;;;
+;;;       This is macro-ified for easier coding.  To use,               ;;;
+;;;       type %ShootBulletAngle($00,$01,$02,$03,$04,$05,$06,$07)       ;;;
+;;;       replacing those values with your actual values.               ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1210,11 +1190,11 @@ FindBulletSlotAim:
     ; LDA #$05
     ; STA $19
 
-    STZ !numOfBullets
-    LDA !shotBullets
-    EOR #$01
-    STA !shotBullets
-    LDX #$00
+    STZ !numOfBullets                   ;
+    LDA !shotBullets                    ;
+    EOR #$01                            ;
+    STA !shotBullets                    ;
+    LDX #$00                            ;
 
     FindLoopPoint3:
     INX                                 ;\
@@ -1223,61 +1203,60 @@ FindBulletSlotAim:
     CPX #$46                            ; |
     BEQ BulletSlotNotAvailable3         ;/  $140B
 
-    LDA !bulletType,x
-    BEQ ExitFindLoop3
+    LDA !bulletType,x                   ;
+    BEQ ExitFindLoop3                   ;
 
 
-
-    CPX #$7f
-    BNE FindLoopPoint3
-    BRA NoSlotsAvailable3
+    CPX #$7f                            ;
+    BNE FindLoopPoint3                  ;
+    BRA NoSlotsAvailable3               ;
 
 ExitFindLoop3:
                                         ; This is where bullets are created.
-    LDA #$40                
+    LDA #$40                            ;
     STA $1DF9                           ; play sound effect
-    LDA $01
-    STA !bulletXPos,x
-    LDA $02
-    STA !bulletYPos,x
-    LDA $03
-    STA !bulletXAccel,x
-    LDA $04
-    STA !bulletYAccel,x
-    ;LDA $05
-    TXA
-    LSR
-    LSR
-    LSR
-    LSR
-    CLC
-    ADC #$0a
-    STA !bulletType,x
-    LDA $06
-    STA !bulletInfo,x
-    LDA #$07
-    STA !bulletXFrac,x
-    STA !bulletYFrac,x
+    LDA $01                             ;
+    STA !bulletXPos,x                   ;
+    LDA $02                             ;
+    STA !bulletYPos,x                   ;
+    LDA $03                             ;
+    STA !bulletXAccel,x                 ;
+    LDA $04                             ;
+    STA !bulletYAccel,x                 ;
+    ;LDA $05                            ;
+    TXA                                 ;
+    LSR                                 ;
+    LSR                                 ;
+    LSR                                 ;
+    LSR                                 ;
+    CLC                                 ;
+    ADC #$0a                            ;
+    STA !bulletType,x                   ;
+    LDA $06                             ;
+    STA !bulletInfo,x                   ;
+    LDA #$07                            ;
+    STA !bulletXFrac,x                  ;
+    STA !bulletYFrac,x                  ;
 
-    ; LDA #$01
-    ; STA $19
-    TXA
-    STA $09
+    ; LDA #$01                          ;
+    ; STA $19                           ;
+    TXA                                 ;
+    STA $09                             ;
 
-    LDA $00
-    JSR CODE_01BF6A
-    LDA $00
-    STA !bulletYSpeed,x
-    LDA $01
-    STA !bulletXSpeed,x
+    LDA $00                             ;
+    JSR CODE_01BF6A                     ;
+    LDA $00                             ;
+    STA !bulletYSpeed,x                 ;
+    LDA $01                             ;
+    STA !bulletXSpeed,x                 ;
 
 NoSlotsAvailable3:
-    RTS
+    RTS                                 ;
 
 BulletSlotNotAvailable3:
-    LDA #$00
-    STA !bulletType,x
-    BRL FindLoopPoint3
+    LDA #$00                            ;
+    STA !bulletType,x                   ;
+    BRL FindLoopPoint3                  ;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; aiming routine
@@ -1287,8 +1266,8 @@ BulletSlotNotAvailable3:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 CODE_01BF6A:
-    STA $01
-    REP #$20
+    STA $01                             ; store x-speed
+    REP #$20                            ;
     LDA $d3                             ;\
     CLC                                 ; | offset mario's vertical position by 9 pixels
     ADC #$0008                          ; |
@@ -1324,12 +1303,12 @@ CODE_01BF8C:                            ; |
     STA $0d                             ; |
     PLA                                 ; |
     STA $0c                             ;/
-CODE_01BF9F:    
+CODE_01BF9F:
     LDA #$00                            ;\ zero out $00 AND $0B
     STA $0b                             ; | ...what's wrong with STZ?
     STA $00                             ;/
     LDX $01                             ;\ divide $0C by $0D?
-CODE_01BFA7:                            ;
+CODE_01BFA7:                            ; |
     LDA $0b                             ; |\ if $0C + loop counter is less than $0D,
     CLC                                 ; | |
     ADC $0c                             ; | |
@@ -1349,7 +1328,7 @@ CODE_01BFB4:                            ; |
     STA $00                             ; |
     PLA                                 ; |
     STA $01                             ;/
-CODE_01BFC6:    
+CODE_01BFC6:
     LDA $00                             ;\ if horizontal distance was inverted,
     LDY $02                             ; | invert $00
     BEQ CODE_01BFD3                     ; |
@@ -1357,7 +1336,7 @@ CODE_01BFC6:
     CLC                                 ; |
     ADC #$01                            ; |
     STA $00                             ;/
-CODE_01BFD3:    
+CODE_01BFD3:
     LDA $01                             ;\ if vertical distance was inverted,
     LDY $03                             ; | invert $01
     BEQ CODE_01BFE0                     ; |
@@ -1377,57 +1356,57 @@ CODE_01BFE0:
     RTS                                 ; return
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-CODE_01AD42:    
-    LDY #$00
-    PHX 
-    LDX $09
-    LDA !bulletYPos,x
-    CLC
-    ADC #$04
-    STA !bulletYPos,x
-    LDA $d3
+CODE_01AD42:
+    LDY #$00                            ;
+    PHX                                 ;
+    LDX $09                             ;
+    LDA !bulletYPos,x                   ;
+    CLC                                 ;
+    ADC #$04                            ;
+    STA !bulletYPos,x                   ;
+    LDA $d3                             ;
+    SEC                                 ;
+    SBC !bulletYPos,x                   ;
+    ;CLC                                ;
+    ;ADC #$04                           ;
 
-    SEC
-    SBC !bulletYPos,x
-    ;CLC
-    ;ADC #$04
-    
-    STA $0e
-    LDA $d4
-    SBC #$00
-    BPL Return01AD53
-    INY
-    
-Return01AD53:        
-    LDA !bulletYPos,x
-    SEC
-    SBC #$04
-    STA !bulletYPos,x
-    PLX
+    STA $0e                             ;
+    LDA $d4                             ;
+    SBC #$00                            ;
+    BPL Return01AD53                    ;
+    INY                                 ;
+
+Return01AD53:
+    LDA !bulletYPos,x                   ;
+    SEC                                 ;
+    SBC #$04                            ;
+    STA !bulletYPos,x                   ;
+    PLX                                 ;
     RTS                                 ; return
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-SUB_HORZ_POS:       
+SUB_HORZ_POS:
     LDY #$00                            ; A:25D0 X:0006 Y:0001 D:0000 DB:03 S:01ED P:eNvMXdizCHC:1020 VC:097 00 FL:31642
-    LDX $09
-    LDA !bulletXPos,x
-    CLC
-    ADC #$04
-    STA !bulletXPos,x
+    LDX $09                             ;
+    LDA !bulletXPos,x                   ;
+    CLC                                 ;
+    ADC #$04                            ;
+    STA !bulletXPos,x                   ;
     LDA $94                             ; A:25D0 X:0006 Y:0000 D:0000 DB:03 S:01ED P:envMXdiZCHC:1036 VC:097 00 FL:31642
     SEC                                 ; A:25F0 X:0006 Y:0000 D:0000 DB:03 S:01ED P:eNvMXdizCHC:1060 VC:097 00 FL:31642
     SBC !bulletXPos,x                   ; A:25F0 X:0006 Y:0000 D:0000 DB:03 S:01ED P:eNvMXdizCHC:1074 VC:097 00 FL:31642
-    ;CLC            
-    ;ADC #$04
+    ;CLC                                ;
+    ;ADC #$04                           ;
     STA $0f                             ; A:25F4 X:0006 Y:0000 D:0000 DB:03 S:01ED P:eNvMXdizcHC:1104 VC:097 00 FL:31642
     LDA $95                             ; A:25F4 X:0006 Y:0000 D:0000 DB:03 S:01ED P:eNvMXdizcHC:1128 VC:097 00 FL:31642
     SBC $14e0,x                         ; A:2500 X:0006 Y:0000 D:0000 DB:03 S:01ED P:envMXdiZcHC:1152 VC:097 00 FL:31642
     BPL LABEL16                         ; A:25FF X:0006 Y:0000 D:0000 DB:03 S:01ED P:eNvMXdizcHC:1184 VC:097 00 FL:31642
     INY                                 ; A:25FF X:0006 Y:0000 D:0000 DB:03 S:01ED P:eNvMXdizcHC:1200 VC:097 00 FL:31642
-LABEL16:    
-    LDA !bulletXPos,x
-    SEC
-    SBC #$04
-    STA !bulletXPos,x
+LABEL16:
+    LDA !bulletXPos,x                   ;
+    SEC                                 ;
+    SBC #$04                            ;
+    STA !bulletXPos,x                   ;
     RTS                                 ; A:25FF X:0006 Y:0001 D:0000 DB:03 S:01ED P:envMXdizcHC:1214 VC:097 00 FL:31642
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

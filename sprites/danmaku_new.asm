@@ -491,17 +491,12 @@ YSpeedIsNegative:
 DontUpdateYPos:
 DontResetYFrac:            ; I had to recode this section multiple times,
 DontResetYFrac2:        ; AND I was too lazy to swap out the old labels.
-
-
-
     LDA !bulletYAccel,x
     CLC
     ADC !bulletYSpeed,x
     STA !bulletYSpeed,x
 
-DoneWithYAccel:
-
-                    ;Now we handle horizontal movement.
+DoneWithYAccel:             ;Now we handle horizontal movement.
     LDA !bulletXSpeed,x
     BMI XSpeedIsNegative
     CLC
@@ -523,7 +518,6 @@ DoneWithYAccel:
     AND #$0f
     STA !bulletXFrac,x
     BRA DontResetXFrac
-
 
 XSpeedIsNegative:
     CLC
@@ -557,18 +551,15 @@ DontUpdateXPos:
 DontResetXFrac:
 DontResetXFrac2:
 DoneMessingWithXSpeed:
-
     LDA !bulletXAccel,x
     CLC
     ADC !bulletXSpeed,x
     STA !bulletXSpeed,x
 
 IsntOutOfBounds:
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Hit Detection Routine
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
     CPX #$00
     BNE IsntZero
     LDA !bulletType,x
@@ -739,7 +730,7 @@ SUB_GFX:
                                     ;****************************************************
 
     LDX #$FF
-    GraphicsLoop:
+GraphicsLoop:
     INX
     LDA $00                         ; set x position of the tile
     CLC
@@ -916,8 +907,7 @@ FindLoopPoint:
     BNE FindLoopPoint
     BRA NoSlotsAvailable
 
-ExitFindLoop:
-                                    ; This is where bullets are created.
+ExitFindLoop:                       ; This is where bullets are created.
     LDA #$40
     STA $1DF9                       ; play sound effect
 
@@ -993,8 +983,7 @@ FindLoopPoint2:
     BNE FindLoopPoint2
     BRA NoSlotsAvailable2
 
-ExitFindLoop2:
-                                    ; This is where bullets are created.
+ExitFindLoop2:                      ; This is where bullets are created.
     LDA #$40
     STA $1df9                       ; play sound effect
     LDA $03
@@ -1027,8 +1016,6 @@ ExitFindLoop2:
     JSL COS
     LDA $05
     STA !bulletXSpeed,x
-
-
 
 NoSlotsAvailable2:
     RTS
@@ -1083,8 +1070,7 @@ FindBulletSlotAim:
     BNE FindLoopPoint3
     BRA NoSlotsAvailable3
 
-ExitFindLoop3:
-                                    ; This is where bullets are created.
+ExitFindLoop3:                      ; This is where bullets are created.
     LDA #$40
     STA $1DF9                       ; play sound effect
     LDA $01
@@ -1278,10 +1264,6 @@ LABEL16:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-
-
-
-
 ;-------------------------------;SIN JSL
 SIN:
     PHP                         ; From: Support.asm's JSL.asm
@@ -1321,8 +1303,10 @@ SIN:
                                 ;
 .IF_SIN_PLUS                    ;
     STA $03                     ;
+                                ;
 .IF0_SIN                        ;
     STZ $04                     ;
+                                ;
 .END_SIN                        ;
     PLA                         ;
     STA $02                     ; $02‚ð•œŒ³
@@ -1356,6 +1340,7 @@ COS:
     ASL $4216                   ;o‚½“š‚¦‚Ì¬”“_ˆÈ‰º‚ðŽlŽÌŒÜ“ü
     LDA $4217                   ;
     ADC #$00                    ;
+                                ;
 .IF1_COS                        ;
     LSR $08                     ;â‘Î’l‚ðŠO‚·
     BCC .IF_COS_PLUS            ;
@@ -1369,8 +1354,10 @@ COS:
                                 ;
 .IF_COS_PLUS                    ;
     STA $05                     ;
+                                ;
 .IF0_COS                        ;
     STZ $06                     ;
+                                ;
 .END_COS                        ;
     PLX                         ;
     PLP                         ;

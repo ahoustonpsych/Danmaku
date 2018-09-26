@@ -19,3 +19,27 @@ MAIN:
 	- JMP to attack routines
 		- find bullet slot
 		- create bullet
+
+
+
+
+- init
+- main
+- mario death handlers
+- floaty boss
+- findbullet macros
+- spell card routines until stateTimer finishes
+- spell card finished routine
+- loop through & update all bullets
+- hit detection
+- mario hurt routine
+- bullet graphics routine
+- boss graphics routine
+- main graphics loop
+- get_draw_info
+- find bullet slots (xy/angle/aim)
+- aiming routine (magikoopa hijack)
+- sin/cos routine
+- mario movement routine
+
+-end
