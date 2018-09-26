@@ -1,80 +1,106 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;	Danmaku Boss
+;	Danmaku Boss (Modified Original)
 ;	Original WIP by Kipernal
 ;	Heavily modified by TheGreekBrit
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-!bulletXSpeed	= $7f0d00		; The horizontal speed of the bullets.
-!bulletYSpeed	= $7f0e00		; The vertical speed of the bullets.
-!bulletXPos	= $7f0f00		; The distance a bullet is from the left side of the screen.
-!bulletYPos	= $7f1000		; The distance a bullet is from the top side of the screen.
-!bulletType	= $7f1100		; The color of the bullet. 0 is used to mean that the bullet is nonexistant.
-!bulletInfo	= $7f1200		; Any extra information about the bullet.
-!bulletXAccel	= $7f1300		; The X acceleration of a bullet
-!bulletYAccel	= $7f1400		; The Y acceleration of a bullet
-!bulletXFrac	= $7f1500		; The X accumulating fraction position of a bullet.
-!bulletYFrac	= $7f1600		; The X accumulating fraction position of a bullet.
-!bossYOffset	= $0dd9			; Used for a floaty effect with the boss.
-!numOfBullets	= $140b			; Keeps track of how many bullets exist.
-!shotBullets	= $140c			; Used as a misc counter.
-!bulletLocation	= $1763			; A two byte wide variable used for hit detection.
-!hitBoxOAM	= $0200			; The OAM address for Mario's hitbox. This really shouldn't be changed.
-!state		= $1dfd			; The current state of the boss. 0 is idle, 1 is display spell card, 2 is fire bullets, 3 is Mario has been hit, 4 is boss is dead.
-!stateTimer	= $60			; The amount of time to remain idle, displaying a spell card, or remain in the Mario Is Dead state.
-!timeHasRunOut	= $61			; This flag is set whenever the timer loops from 0 to FFFF. It is your responsibility to reset it at the end of a spellcard.
-!currentCard	= $62			; This is the number of the attack that the boss is using. It is used to determine how bullets should be fired.
-!timer		= $63			; How much time has passed (two bytes)
+!hitBoxOAM	        = $0200			; The OAM address for Mario's hitbox. This really shouldn't be changed.
 
-!angle1 	= $0f5e			;\ 
-!angle2 	= $0f60			; | These are used for some of the spellcards
-!angle3 	= $0f62			; | (they have no global effect)
-!angle4 	= $0f64			;/
+!state		        = $1dfd			;\  The current state of the boss
+                                    ; | 0 = idle
+                                    ; | 1 = display spell card
+                                    ; | 2 = fire bullets
+                                    ; | 3 = Mario has been hit
+                                    ;/  4 = boss is dead
+
+!stateTimer	        = $60			; Boss state timer. Controlling how long to:
+                                    ; idle
+                                    ; display a spell card
+                                    ; remain in the 'Mario Is Dead' state
+
+!timeHasRunOut	    = $61			; This flag is set whenever the timer loops from 0 to FFFF
+                                    ; It is your responsibility to reset it at the end of a spellcard
+
+!currentCard	    = $62			; Boss attack number
+                                    ; Determines which order bullet patterns are used
+
+!timer		        = $63			; How much time has passed (two bytes)
+
+!bossYOffset	    = $0dd9         ; Used for a floaty effect with the boss
+!numOfBullets	    = $140b         ; Number of bullets in existence
+!shotBullets	    = $140c         ; Misc counter
+!bulletLocation	    = $1763         ; A two byte variable used for hit detection
+
+!angle1 	        = $0f5e			;\
+!angle2 	        = $0f60			; | These are used for some of the spellcards
+!angle3 	        = $0f62			; | (they have no global effect)
+!angle4 	        = $0f64			;/
+
+; BULLET TABLES
+; each entry is indexed by the bullet number
+!bulletXSpeed	    = $7f0d00		; Horizontal speed of the bullets
+!bulletYSpeed	    = $7f0e00		; Vertical speed of the bullets
+!bulletXPos	        = $7f0f00       ; Bullet offset from the left side of the screen
+!bulletYPos	        = $7f1000       ; Bullet offset from the top of the screen
+!bulletXAccel	    = $7f1300       ; X acceleration of a bullet
+!bulletYAccel	    = $7f1400       ; Y acceleration of a bullet
+!bulletXFrac	    = $7f1500       ; X subpixel of a bullet
+!bulletYFrac	    = $7f1600       ; X subpixel of a bullet
+!bulletType	        = $7f1100       ; Bullet color. 0 = bullet doesn't exist
+!bulletInfo	        = $7f1200       ; Any extra information about the bullet
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; INIT AND MAIN JSL targets
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	print "INIT ",pc
-	JSR INIT
-	RTL         
-	
+	print "INIT ",pc                ;
+	JSR INIT                        ;\ run INIT routine
+	RTL                             ;/
+
 	print "MAIN ",pc
 	PHB
 	PHK
 	PLB
 	JSR MAIN
-	STZ $0313		; Fixes a bug with Mario's YXPPCCCT OAM slots
-	STZ $0317		; Fixes a bug with Mario's YXPPCCCT OAM slots
+	STZ $0313		                ; Fixes a bug with Mario's YXPPCCCT OAM slots
+	STZ $0317		                ; Fixes a bug with Mario's YXPPCCCT OAM slots
 	;STZ $0d9c
 	PLB
 	RTL
 
 
-KYoffset:	db $0c,$0c,$0c,$0c,$0c,$0c,$0b,$0b,$0b,$0b,$0a,$0a,$0a,$09,$09,$09
+KYoffset:
+        db $0c,$0c,$0c,$0c,$0c,$0c,$0b,$0b,$0b,$0b,$0a,$0a,$0a,$09,$09,$09
 		db $08,$08,$08,$07,$07,$07,$06,$06,$06,$05,$05,$04,$04,$03,$03,$03
 		db $02,$02,$02,$01,$01,$01,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00
 		db $00,$00,$00,$01,$01,$01,$01,$02,$02,$02,$03,$03,$03,$04,$04,$05
 		db $05,$06,$06,$06,$07,$07,$07,$08,$08,$08,$09,$09,$09,$0a,$0a,$0a
 		db $0b,$0b,$0b,$0b,$0c,$0c,$0c,$0c,$0c,$0c
 
-
 ; Xoffsets:	db $1a,$14,$24,$00,$10,$20,$30,$00,$10,$20,$30,$40,$00,$10,$20,$30
-Xoffsets:	db $00,$10,$20,$30,$00,$10,$20,$30,$00,$10,$20,$30,$00,$10,$20,$30
+Xoffsets:
+        db $00,$10,$20,$30,$00,$10,$20,$30,$00,$10,$20,$30,$00,$10,$20,$30
 
 ; Yoffsets:	db $00,$10,$10,$20,$20,$20,$20,$30,$30,$30,$30,$30,$40,$40,$40,$40
-Yoffsets: 	db $00,$00,$00,$00,$10,$10,$10,$10,$20,$20,$20,$20,$30,$30,$30,$30
+Yoffsets:
+        db $00,$00,$00,$00,$10,$10,$10,$10,$20,$20,$20,$20,$30,$30,$30,$30
 
 ;Tiles:		db $00,$20,$22,$40,$42,$44,$46,$60,$62,$64,$66,$68,$02,$04,$06,$08
-Tiles: 		db $00,$02,$04,$06
+Tiles:
+        db $00,$02,$04,$06
 		db $20,$22,$24,$26
 		db $40,$42,$44,$46
 		db $60,$62,$64,$66
 
-BXoffsets:	db $00,$08,$10,$18,$20,$28,$30,$38,$40,$48,$50,$58,$60,$68,$70,$78,$80
+BXoffsets:
+        db $00,$08,$10,$18,$20,$28,$30,$38,$40,$48,$50,$58,$60,$68,$70,$78,$80
 
-BYoffsets:	db $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$10
+BYoffsets:
+        db $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$10
 
-BTiles:		db $0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b
+BTiles:
+        db $0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b
 		db $0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b
 		db $0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b
 		db $0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b
@@ -82,46 +108,47 @@ BTiles:		db $0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b,$0c,$0d,$0e,$0a,$0b
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;INITIALIZE
+; clear state
+; set idle timer
+; set global timer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 INIT:
-	STZ !state			; state 0 (doesn't exist)
-	STZ !currentCard		; Card 0 (INIT, does nothing)
-	LDA #$80			;
-	STA !stateTimer			; Countdown before the boss starts shooting
-	PHX				;
-	REP #$10			;
-	LDX #$00f0			; 
-	STX !timer			;
-	STZ $0D9C
+	STZ !state			            ; state 0 (doesn't exist)
+	STZ !currentCard	            ; Card 0 (INIT, does nothing)
+	LDA #$80			            ;
+	STA !stateTimer			        ; Countdown before the boss starts shooting
+	PHX				                ;
+	REP #$10			            ;
+	LDX #$00f0			            ;
+	STX !timer			            ;
+	STZ $0D9C                       ;
 
-
-; 	LDX #$ffff			;
-; InitLoopPoint:			;
-; 	INX				; 
-; 	LDA #$00			;
-; 	STA !bulletXSpeed,x		;
-; 	CPX.w #$1500			; 
-; 	BNE InitLoopPoint		;
-; 	SEP #$10			;
-; 	PLX				;
+; 	LDX #$ffff			            ;
+; InitLoopPoint:			        ;
+; 	INX				                ;
+; 	LDA #$00			            ;
+; 	STA !bulletXSpeed,x		        ;
+; 	CPX.w #$1500			        ;
+; 	BNE InitLoopPoint		        ;
+; 	SEP #$10			            ;
+; 	PLX				                ;
 
 .spritetableclear
-
-	SEP #$10			;\
-	REP #$20 			; |
-	STZ $211B 			; |
-	LDA #$3480			; |
-	STA $4300			; |
-	LDA #$0D00 			; |
-	STA $4302			; |
-	LDX #$7F 			; | nuke $7F0D00 - $7F21FF
-	STX $4304			; |
-	LDA #$1500			; |
-	STA $4305			; |
-	LDX #$01			; |
-	STX $420B			; |
-	SEP #$20 			; |
-	PLX 				;/
+	SEP #$10			            ;\
+	REP #$20 			            ; |
+	STZ $211B 			            ; |
+	LDA #$3480			            ; |
+	STA $4300			            ; |
+	LDA #$0D00 			            ; |
+	STA $4302			            ; |
+	LDX #$7F 			            ; | nuke $7F0D00 - $7F21FF (all sprite info)
+	STX $4304			            ; |
+	LDA #$1500			            ; |
+	STA $4305			            ; |
+	LDX #$01			            ; |
+	STX $420B			            ; |
+	SEP #$20 			            ; |
+	PLX 				            ;/
 
 
 	REP #$20
@@ -137,190 +164,119 @@ INIT:
 	RTS
 
 
-MAIN:	
-	DEC !stateTimer			; 
-	LDA !stateTimer			; 
-	BNE stateTimerIsnt0		; If timer is zero...
-	LDA #$02			;
-	STA !state			; ...begin firing bullets
+MAIN:
+	DEC !stateTimer			        ;\
+	LDA !stateTimer			        ; | kick off main thread if state timer is still counting
+	BNE stateTimerIsnt0		        ;/
+	LDA #$02			            ;\
+	STA !state			            ;/ begin firing bullets
 
 stateTimerIsnt0:
-	
-	LDA !state			;
-	CMP #$03			; If Mario is dying...
-	BEQ MarioHasDiedMovement	; ...don't animate his death
-	JSR MariosMovementRoutine	;
+	LDA !state          			;\
+	CMP #$03			            ; | If Mario is dying...
+	BEQ MarioHasDiedMovement	    ;/ ...don't animate his death
+	JSR MariosMovementRoutine      	; Handle Mario movements
 	BRA SkipMarioHasDiedMovement	;
 
 MarioHasDiedMovement:
-	REP #$20
-	DEC $96				; Keep his y-position constant, as to immobilize him
-	SEP #$20
-	DEC !stateTimer			; 
-	
+	REP #$20                        ;
+	DEC $96				            ; Keep his y-position constant, as to immobilize him
+	SEP #$20                        ;
+	DEC !stateTimer		        	;
+
 SkipMarioHasDiedMovement:
-
-	INC !bossYOffset		;\ 
-	LDA !bossYOffset		; |
-	CMP #$5a			; |
+	INC !bossYOffset	        	;\
+	LDA !bossYOffset	        	; |
+	CMP #$5a			            ; |
 	BNE DontResetBossFloatHeight	; | FLOATY BOSS
-	STZ !bossYOffset		; |
-					; |
-DontResetBossFloatHeight:		; |
-	PHX				;/
+	STZ !bossYOffset	        	; |
+					                ; |
+DontResetBossFloatHeight:	    	; |
+	PHX				                ;/
 
 
+	LDA !state			            ; If it's time to shoot bullets...
+	CMP #$02                        ;
+	BEQ RunSpellCards 	        	; ...shoot bullets
+	BRL dontRunSpellCards		    ;
 
-	LDA !state			; If it's time to shoot bullets...
-	CMP #$02			;
-	BEQ RunSpellCards 		; ...shoot bullets
-	BRL dontRunSpellCards		;
+incsrc macros.asm
+;macro ShootBulletXY(Xspeed,YSpeed,xPos,yPos,xAccel,yAccel,Type,Info)
+;macro ShootBulletAngle(Angle,Speed,xPos,yPos,xAccel,yAccel,Type,Info)	; Note that <angle> must be a 16-BIT value from 0000 to 01FF
+;macro ShootBulletToMario(Speed,xPos,yPos,xAccel,yAccel,Type,Info)
+
+;$00		    ; Radius
+;$01 $02 	    ; Angle, from 0-1FF
+
 
 RunSpellCards:
+	;LDA #$0A                       ;
+	;STA $00                        ; radius
+	;STZ $02                        ;\
+	;LDA #$40                       ; | angle
+	;STA $01                        ;/
+	;JSR CODE_01BF6A                ;
+	;JSL SIN                        ;
+	;LDA #$01                       ;
+	;STA $19                        ;
 
-macro ShootBulletXY(Xspeed,YSpeed,xPos,yPos,xAccel,yAccel,Type,Info)
-	LDA <Xspeed>
-	STA $00				; $00 is the x-speed of the bullet
-	LDA <YSpeed>
-	STA $01				; $01 is the y-speed of the bullet
-	LDA <xPos>
-	STA $02				; $02 is the initial x-position of the bullet
-	LDA <yPos>
-	STA $03				; $03 is the initial y-position of the bullet
-	LDA <xAccel>
-	STA $04				; $04 is the x-acceleration of bullet
-	LDA <yAccel>
-	STA $05				; $05 is the y-acceleration of the bullet
-	LDA <Type>
-	STA $06				; $06 is the type of the bullet
-	LDA <Info>
-	STA $07				; $07 is the extra info for the bullet
-	JSR FindBulletSlotXY		; Find an OAM slot for the bullet
-endmacro
-
-macro ShootBulletAngle(Angle,Speed,xPos,yPos,xAccel,yAccel,Type,Info)	; Note that <angle> must be a 16-BIT value from 0000 to 01FF
-	REP #$20
-	LDA <Angle>
-	STA $01				; $01 is the 16-BIT value of the angle of bullet between $0000 AND $01FF
-	SEP #$20
-	LDA <Speed>
-	STA $00				; $00 is the speed of the bullet
-	LDA <xPos>
-	STA $03				; $03 is the x-position of the bullet
-	LDA <yPos>
-	STA $04				; $04 is the y-position of the bullet
-	LDA <xAccel>
-	STA $05				; $05 is the x-acceleration of the bullet
-	LDA <yAccel>
-	STA $06				; $06 is the y-acceleration of the bullet
-	LDA <Type>
-	STA $07				; $07 is the type of the bullet
-	LDA <Info>
-	STA $08				; $08 is the extra info for the bullet
-	JSR FindBulletSlotAngle		; Find an OAM slot for the bullet
-endmacro
-
-macro ShootBulletToMario(Speed,xPos,yPos,xAccel,yAccel,Type,Info)
-	LDA <Speed>
-	STA $00				; $00 is the speed of the bullet
-	LDA <xPos>
-	STA $01				; $01 is the x-position of the bullet
-	LDA <yPos>
-	STA $02				; $02 is the y-position of the bullet
-	LDA <xAccel>
-	STA $03				; $03 is the x-acceleration of the bullet
-	LDA <yAccel>
-	STA $04				; $04 is the y-acceleration of the bullet
-	LDA <Type>
-	STA $05				; $05 is the type of the bullet
-	LDA <Info>
-	STA $06				; $06 is the extra info for the bullet
-	JSR FindBulletSlotAim		; Find an OAM slot for the bullet
-endmacro
+	LDA $13				            ;\  TODO maybe use $14 due to pause abuse
+	AND #$07                        ; |
+	;CMP #$07                       ; |
+	BEQ BeginAttacks                ; | decrement timer every 8 frames
+	REP #$30                        ; |
+	DEC !timer                      ; |
+	SEP #$30                        ;/
 
 
-;$00		;Radius
-;$01 $02 	;Angle, from 0-1FF
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; this is so dumb                                          ;
+; determines which attack subroutine to call               ;
+; NOTE: expand as needed when more spellcards are added    ;
+; TODO: this would be way less disgusting with a ptr table ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+BeginAttacks:
 
-	;LDA #$0A
-	;STA $00
-	;STZ $02
-	;LDA #$40
-	;STA $01
-	;JSR CODE_01BF6A
-	;JSL SIN
-	;LDA #$01
-	;STA $19
-
-	LDA $13				;Consider this to be a master timer.
-	AND #$07
-	;CMP #$07
-	BEQ DontdecreaseTimer
-	REP #$30
-	DEC !timer
-	SEP #$30
-
-TimerHasNotRunOut:
-DontdecreaseTimer:
-
-
-	LDA !currentCard		; If not attack 0
-	BNE NotAttack0			; Go to attack 1
-	JMP Attack0			; Else, go to attack 0
-
-NotAttack0:	
-	CMP #$01			; If not attack 1
-	BNE NotAttack1          	; Go to attack 2
-	JMP Attack1             	; Else, go to attack 1
-
-NotAttack1:	
-	CMP #$02			; If not attack 2
-	BNE NotAttack2          	; Go to attack 3
-	JMP Attack2             	; Else, go to attack 2
-
-NotAttack2:	
-	CMP #$03			; If not attack 3
-	BNE NoAttacks           	; Restart the routine
-	JMP Attack3             	; Else, go to attack 3
-NoAttacks:
-	JMP MainRoutinestart
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; JMPS to current attack subroutine               ;
+; or MainRoutineStart, if there's no attacks      ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+%callAttackSubroutine(currentCard)
 
 
 
-
+; all attacks except the second are the same currently
+;Spellcard0:
+Attack0:
 Attack2:
 Attack3:
-
-;Spellcard0:
-
-Attack0:
+    print pc,"begin attack ",!currentCard
 	;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
 	REP #$20
 	LDA !timer		
-	CMP #$ffff			; If timer is #$FFFF (rolled over from #$00)
-	BNE DontEndCard01		; End the spellcard
+	CMP #$ffff			        ; If timer is #$FFFF (rolled over from #$00)
+	BNE DontEndCard01		    ; End the spellcard
 
-	LDA #$00ff			; From here until the DontEndCard01 is what happens when this card runs out of time.
-					; You can consider it the INIT for each card.
-	STZ !angle1			; These are variables used for the next spellcard.
-	STZ !angle2			; The are not globally important.
-	STA !angle3	
-	STA !angle4	
+
+	LDA #$00ff			        ; From here until the DontEndCard01 is what happens when this card runs out of time.
+					            ; You can consider it the INIT for each card.
+	STZ !angle1			        ; These are variables used for the next spellcard.
+	STZ !angle2		        	; The are not globally important.
+	STA !angle3	                ;
+	STA !angle4	                ;
 
 	SEP #$20	
 
-	STZ !state			; Stop firing bullets
+	STZ !state			        ; Stop firing bullets
 	REP #$20	
-	LDA #$00ff			; This is the amount of time the next spellcard will last for.
-	STA !timer			;
+	LDA #$00ff			        ; This is the amount of time the next spellcard will last for.
+	STA !timer			        ;
 	SEP #$20	
-	LDA #$f0			; This is the amount of time before the boss starts firing again
-	STA !stateTimer			; 
-	INC !currentCard		; Next spellcard
-	
+	LDA #$f0			        ; This is the amount of time before the boss starts firing again
+	STA !stateTimer			    ;
+	INC !currentCard		    ; Next spellcard
 
-	
 
 DontEndCard01:
 	SEP #$20
