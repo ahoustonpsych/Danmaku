@@ -15,5 +15,7 @@ MAIN:
 - boss floating sequence
 
 - RunSpellCards
-	- dec timer every 8 frames
-	- JMP to routines
+	- wait 8 frames
+	- JMP to attack routines
+		- find bullet slot
+		- create bullet

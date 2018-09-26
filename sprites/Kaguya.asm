@@ -310,12 +310,12 @@ endmacro
 
 
 
-BRA SkipThisThingey01
+        BRA SkipThisThingey01
+
 Spell01PrematureEnd2:
-BRL Spell01PrematureEnd
+        BRL Spell01PrematureEnd
+
 SkipThisThingey01:
-
-
 		LDA $13
 		AND #$0F
 		CMP #$0F
@@ -331,7 +331,7 @@ SkipThisThingey01:
 		;%ShootBulletAngle(!angle2,#$07,#$7F,#$7F,#$03,#$03,#$0A,#$00)
 
 Spell01PrematureEnd:
-JMP DoneFiring				;Always call this at the end of a spellcard!!
+        JMP DoneFiring				;Always call this at the end of a spellcard!!
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Spellcard1:
@@ -375,9 +375,11 @@ JMP DoneFiring				;Always call this at the end of a spellcard!!
 		CMP #$0F
 		BNE Spell02PrematureEnd2
 
-BRA SkipThisThingey02
+        BRA SkipThisThingey02
+
 Spell02PrematureEnd2:
-BRL Spell02PrematureEnd
+        BRL Spell02PrematureEnd
+
 SkipThisThingey02:
 		LDA $80
 		CLC
@@ -433,7 +435,7 @@ SkipThisThingey02:
 
 		SEP #$20
 Spell02PrematureEnd:
-JMP DoneFiring
+        JMP DoneFiring
 
 
 
@@ -973,7 +975,7 @@ STA !shotBullets
 LDX #$00
 
 FindLoopPoint:
-INX 
+INX
 CPX #$44		;Protection against overwriting Mario's sprite slots with bullets
 BEQ BulletSlotNotAvailable
 CPX #$45
