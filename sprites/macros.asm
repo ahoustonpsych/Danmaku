@@ -78,23 +78,24 @@ endmacro
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro CallAttackSubroutine(Card)
         LDA <Card>              ;\  If not attack 0
-        BNE .notattack0          ; | Go to attack 1
+        BNE NoAttacks         ; | Go to attack 1
         JMP Attack0             ;/  Else, go to attack 0
 
     .notattack0
         CMP #$01                ;\  If not attack 1
-        BNE .notattack1          ; | Go to attack 2
+        BNE .notattack1         ; | Go to attack 2
         JMP Attack1             ;/  Else, go to attack 1
 
     .notattack1
         CMP #$02                ;\  If not attack 2
-        BNE .notattack2          ; | Go to attack 3
+        BNE .notattack2         ; | Go to attack 3
         JMP Attack2             ;/  Else, go to attack 2
 
     .notattack2
         CMP #$03                ;\  If not attack 3
-        BNE .noattacks           ; | Restart the routine
+        BNE NoAttacks           ; | Restart the routine
         JMP Attack3             ;/  Else, go to attack 3
 
-    .noattacks:
+    NoAttacks:
         JMP MainRoutineStart
+endmacro

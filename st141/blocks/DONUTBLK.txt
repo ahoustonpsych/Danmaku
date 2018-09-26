@@ -1,0 +1,7 @@
+Block Title: Donut Block
+Block Usage: When stepped on, this will spawn a falling donut block.  The donut block must be inserted with sprite tool as sprite 85.
+ASM Filename: donutblk.bin
+Above Offset: 328
+Reloc Offsets: A,191,
+All Other Offsets: -1
+Author Name: mikeyk

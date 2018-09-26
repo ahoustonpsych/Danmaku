@@ -1,0 +1,13 @@
+There are four different types of elevator platfroms:
+
+ELV_DIR    spwans an elevator that changes directions when jumped on
+ELV_RGT    spawns an elevator moving right
+ELV_LFT    spawns an elevator moving left
+ELV_UP     spawns an elevator moving up
+
+Each platform is made up of two custom blocks.  The first file in each set is for the left half of the platform.  The second is for the right half.  Configuration is the same for all of the bin files:
+
+Above Offset: 0
+All Other Offsets: -1
+
+Remember that the directional elevator sprite must be custom sprite 86
