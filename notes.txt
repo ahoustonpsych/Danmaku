@@ -1,0 +1,19 @@
+
+
+INIT:
+- clear state
+- state timer: 80
+- general timer: F0
+- nuke all sprites
+
+MAIN:
+- check state timer
+	- if stateTimer = 0
+		- update state (fire bullets)
+	- else continue
+- mario death handler (freezes mario while dying)
+- boss floating sequence
+
+- RunSpellCards
+	- dec timer every 8 frames
+	- JMP to routines
