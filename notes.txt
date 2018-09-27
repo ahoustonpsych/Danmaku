@@ -26,20 +26,60 @@ MAIN:
 - init
 - main
 - mario death handlers
-X floaty boss
-- findbullet macros
+//- floaty boss
+//- findbullet routines
 - spell card routines until stateTimer finishes
 - spell card finished routine
-- loop through & update all bullets
-- hit detection
-- mario hurt routine
-- bullet graphics routine
-- boss graphics routine
-- main graphics loop
-- get_draw_info
-- find bullet slots (xy/angle/aim)
-- aiming routine (magikoopa hijack)
-- sin/cos routine
-- mario movement routine
-
+//- loop through & update all bullet data
+//- hit detection
+//- mario hurt routine
+//- bullet graphics routine
+//- boss graphics routine
+//- main graphics loop
+//- get_draw_info
+//- find bullet slots (xy/angle/aim)
+//- aiming routine (magikoopa hijack)
+//- sin/cos routines
+//- mario movement routine
 -end
+
+DEBUG:
+addr - $58
+0 - pre-init
+1 - init
+2 - JMP to attack routine
+3 - DoneFiring
+4 - After GetDrawInfo macro (before RTS)
+5 - After GraphicsLoop macro (before RTS)
+6 - 
+
+scratch - $7C
+0 - pre-init
+1,2,3,4 = current attack (card) number, minus 1
+0A - main
+0B - init
+0C - main before JSR
+10 - Attack0
+20 - Attack2
+30 - Attack1
+40 - Attack3
+50 - 
+60 - After GetDrawInfo (ERROR)
+65 - Start ON_SCREEN_X
+66 - Start ON_SCREEN_LOOP
+67 - Start ON_SCREEN_Y
+68 - GetDrawInfo Return Normal
+69 - GetDrawInfo Return Long (Invalid Sprites)
+70 - After GraphicsLoop (before RTS)
+71 - After GraphicsLoop Loop (before JSL)
+75 - GraphicsLoop Processing for tile (tile # in X)
+7F - DoneFiring
+A0 - MainRoutineStart
+B0 - End of MainLoop/MainRoutineStart
+C0 - End of Bullet Update Routine
+C5 - After Hit Detection
+C6 - After Bullet Graphics
+C7 - After Boss Graphics
+C8 - Start Generic Graphics (GetDrawInfo)
+FF - End Boss Main
+

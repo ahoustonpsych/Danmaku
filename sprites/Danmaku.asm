@@ -17,15 +17,19 @@ incsrc sprites/routines.asm                 ;
 ; INIT AND MAIN JSL targets
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    print pc," INIT"                        ;
+    print "INIT ",pc                        ;
+    %Debug(#$0B)                            ; DEBUG 1 = 'init'
     JSR INIT                                ;\ run INIT routine
     RTL                                     ;/
 
-    print pc," MAIN"                        ;
+    print "MAIN ",pc                        ;
     PHB                                     ;
     PHK                                     ;
     PLB                                     ;
+    %Debug(#$0C)                            ;
+    PER MainReturn-1                        ;
     JSR MAIN                                ; Main routine
+MainReturn:
     STZ $0313                               ; Fixes a bug with Mario's YXPPCCCT OAM slots
     STZ $0317                               ; Fixes a bug with Mario's YXPPCCCT OAM slots
     ;STZ $0d9c                              ;
@@ -54,6 +58,7 @@ INIT:
     RTS                                     ; finish init
 
 MAIN:
+    %Debug(#$0A)                            ; debug
     DEC !stateTimer                         ;\
     LDA !stateTimer                         ; | kick off main thread if state timer is still counting
     BNE stateTimerIsnt0                     ;/
@@ -124,13 +129,14 @@ BeginAttacks:
 ; Bullet Shooting/Spellcard Routine               ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    print pc," Begin Attacks ",!currentCard
+    print " Begin Attacks ",pc
 
 ; all attacks except the second are the same currently
 ;Spellcard0:
 Attack0:
 Attack2:
 Attack3:
+    %Debug(!currentCard+1*10)               ; debug 10,30,40
     REP #$20                                ;
     LDA !timer                              ;\
     CMP #$ffff                              ; | End spellcard if master timer over/underflows
@@ -264,6 +270,7 @@ Spell01PrematureEnd:
 
 ;Spellcard1:
 Attack1:
+    %Debug(#$30)                            ; debug
     REP #$20                                ;\
     LDA !timer                              ; |
     CMP #$ffff                              ; | End spellcard if time has run out
@@ -308,7 +315,7 @@ WaitLonger:
     BRA SkipThisThingy02                    ;
 
 Spell02PrematureEnd2:
-    BRL Spell02PrematureEnd
+    BRL Spell02PrematureEnd                 ;
 
 SkipThisThingy02:
     LDA $80                                 ;\
@@ -325,7 +332,7 @@ SkipThisThingy02:
     ;%ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
     ;%ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
 
-    REP #$20
+    REP #$20                                ;
     LDA !angle1                             ;\
     CLC                                     ; |
     ADC #$0005                              ; |
@@ -399,6 +406,8 @@ dontRunSpellCards:
 ; Bullet Shooting/Spellcard Routine               ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 DoneFiring:
+    ;%DebugInc()                             ;\ debug
+    %Debug(#$7F)                            ;/
     LDA $71                                 ;\
     BNE DontUseSpeedUpThingy                ; |
     LDA #$01                                ; | Skip all mario animations
@@ -418,6 +427,7 @@ DontUseSpeedUpThingy:                       ; |
 MainRoutineStart:
 
 UsedSpeedUpThingy:
+    %Debug(#$A0)
     ;PHY
     REP #$10
     LDX #$0000
@@ -425,30 +435,32 @@ UsedSpeedUpThingy:
 
 MainLoopPoint:
     ;STZ $0d9c
-    INX
+    INX                                     ;
     LDA #$FF                                ;\
-    INC                                     ; | Reset carry?
+    INC                                     ; | Reset carry flag & set negative flag
     LDA #$00                                ; |
     DEC                                     ;/
 
-    ;CPX #$3F                               ;\
-    ;BNE .continue                          ; | unused. presumably loop through all slots then process graphics.
-    ;BRL BossGraphics                       ;/
+    CPX #$7F                                ;\
+    BNE .continue                           ; | unused. presumably loop through all slots then process graphics.
+    BRA UpdateBullets                       ;/
 
 .continue
     LDA !bulletType,x                       ;\ Only process bullets that actually exist
     BEQ MainLoopPoint                       ;/
+    %Debug(#$B0)                            ; debug
 
-    %BulletSpeedPositionUpdate()            ; updates bullets' speed & position based on acceleration & subpixels
+UpdateBullets:
+    %BulletSpeedPositionUpdate()            ; Updates bullets' speed & position based on acceleration & subpixels
 
-
+    %Debug(#$C0)                            ; debug
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Hit Detection Routine       ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     %HitDetection()                         ;
-
+    %Debug(#$C5)                            ; debug
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End Hit Detection Routine   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -457,6 +469,7 @@ MainLoopPoint:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     %BulletGraphics()                       ;
+    %Debug(#$C6)                            ; debug
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End Bullet Graphics Routine ;
@@ -466,6 +479,7 @@ MainLoopPoint:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     %BossGraphics()                         ;
+    %Debug(#$C7)                            ; debug
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End Boss Graphics Routine   ;
@@ -474,20 +488,36 @@ MainLoopPoint:
 ; Generic Graphics Routine    ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 SUB_GFX:
-    JSR GET_DRAW_INFO                       ; after returning:
+    %Debug(#$C8)                            ; debug
+
+    PER DrawReturn-1                        ;
+    %GetDrawInfo()                          ;\ graphics helper. either returns to GraphicsLoop above
+DrawReturn:
+    %Debug(#$60)                            ; |\ debug
+    ;NOP #4                                  ; |/
+    ;RTS                                     ;/ or returns from GFX routine if invalid (offscreen) sprites are detected
+
+    ;PHB : PGK : PLB                         ;
+    ;JSR GET_DRAW_INFO                       ; after returning:
                                             ; Y = index to sprite OAM ($300)
                                             ; $00 = sprite x position relative to screen border
                                             ; $01 = sprite y position relative to screen border
+    ;PLB                                     ;
+    PER GraphicsReturn-1                    ;
 
     PHX                                     ;
     %GraphicsLoop()                         ;\ draw boss graphics (16x16)
-    RTS                                     ;/
+GraphicsReturn:
+    %Debug(#$70)                            ;\ debug
+    ;NOP #4                                  ;/
+    RTS                                     ;
 
-
-
-GET_DRAW_INFO:
-    %GetDrawInfo()                          ;\ graphics helper. either returns to GraphicsLoop above
-    RTS                                     ;/ or returns from GFX routine if invalid (offscreen) sprites are detected
+;GET_DRAW_INFO:
+;    PER GET_DRAW_INFO-1                     ;
+;    %GetDrawInfo()                          ;\ graphics helper. either returns to GraphicsLoop above
+;    %Debug(#$60)                            ; |\ debug
+;    NOP #4                                  ; |/
+;    RTS                                     ;/ or returns from GFX routine if invalid (offscreen) sprites are detected
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End Generic Graphics Routine ;
@@ -496,7 +526,9 @@ GET_DRAW_INFO:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Mario Movement Routine       ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
     %MarioMovement()
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End Mario Movement Routine   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -504,5 +536,6 @@ GET_DRAW_INFO:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End Boss Main                ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    %Debug(#$FF)
     RTS
 

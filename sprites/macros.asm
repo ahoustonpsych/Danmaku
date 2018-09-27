@@ -1,4 +1,33 @@
 
+;;;;;;;;;;;;;;;;;;;
+; DEBUG           ;
+; !debug = $58    ;
+; !scratch = $7C  ;
+;;;;;;;;;;;;;;;;;;;
+macro Debug(Value)
+    PHA : PHX : PHY : NOP #4                ; preserve A/X/Y
+    LDA <Value>                            ;
+    STA !scratch                            ;
+    NOP #4                                  ;
+    PLY : PLX : PLA : NOP #4                ; restore Y/X/A
+endmacro                                    ;
+macro DebugInc()                            ;
+    PHA : PHX : PHY : NOP #4                ; preserve A/X/Y
+    LDA !debug                              ;
+    INC A                                   ;
+    STA !debug                              ;
+    NOP #4                                  ;
+    PLY : PLX : PLA : NOP #4                ; restore Y/X/A
+endmacro                                    ;
+macro DebugDec()                            ;
+    PHA : PHX : PHY : NOP #4                ; preserve A/X/Y
+    LDA !debug                              ;
+    DEC A                                   ;
+    STA !debug                              ;
+    NOP #4                                  ;
+    PLY : PLX : PLA : NOP #4                ; restore Y/X/A
+endmacro                                    ;
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; initialize all sprite tables  ;
@@ -23,7 +52,7 @@ macro InitSpriteTables()
     ;STA $60                                ; | unused
     ;LDA #$00FF                             ; |
     ;STA $62                                ;/
-    SEP #$20
+    SEP #$20                                ;
 
 ;    SEP #$10                               ;\
 ;    REP #$20                               ; |
@@ -138,8 +167,10 @@ endmacro
 ; TODO: this would be way less disgusting with a ptr table   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro CallAttackSubroutine(Card)
+        ;%DebugInc()                        ; debug
+        %Debug(<Card>+1)                    ; debug
         LDA <Card>                          ;\  If not attack 0
-        BNE NoAttacks                       ; | Go to attack 1
+        BNE .notattack0                     ; | Go to attack 1
         JMP Attack0                         ;/  Else, go to attack 0
 
     .notattack0
@@ -158,7 +189,7 @@ macro CallAttackSubroutine(Card)
         JMP Attack3                         ;/  Else, go to attack 3
 
     NoAttacks:
-        JMP MainRoutineStart                ;
+        JMP MainRoutineStart                ; Skip attack sequence if out of cards
 endmacro
 
 
@@ -472,10 +503,11 @@ endmacro
 ; It is adapted from the subroutine at $03B760                                          ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro GetDrawInfo()
-SPR_T1:        db $0C,$1C
-SPR_T2:        db $01,$02
+SPR_T1:     db $0C,$1C                      ;
+SPR_T2:     db $01,$02                      ;
 
-GET_DRAW_INFO:
+    %Debug(#$64)                            ; debug
+
     STZ $186C,x                             ; reset sprite offscreen flag, vertical
     STZ $15A0,x                             ; reset sprite offscreen flag, horizontal
     LDA $E4,x                               ;\
@@ -486,6 +518,7 @@ GET_DRAW_INFO:
     INC $15A0,x                             ;/
 
 ON_SCREEN_X:
+    %Debug(#$65)                            ; debug
     LDA $14E0,x                             ;\
     XBA                                     ; |
     LDA $E4,x                               ; |
@@ -499,14 +532,17 @@ ON_SCREEN_X:
     ROL A                                   ; |
     AND #$01                                ; |
     STA $15C4,x                             ; |
-    BNE INVALID                             ;/
+    BEQ VALID                               ; |
+    BRL INVALID                             ;/
 
+VALID:
     LDY #$00                                ;\ set up loop:
     LDA $1662,x                             ; |
     AND #$20                                ; | if not smushed (1662 & 0x20), go through loop twice
     BEQ ON_SCREEN_LOOP                      ; | else, go through loop once
     INY                                     ;/
 ON_SCREEN_LOOP:
+    %Debug(#$66)                            ; debug
     LDA $D8,x                               ;\
     CLC                                     ; | set vertical offscreen if necessary
     ADC SPR_T1,y                            ; |
@@ -523,6 +559,7 @@ ON_SCREEN_LOOP:
     ORA SPR_T2,y                            ; |
     STA $186C,x                             ; |
 ON_SCREEN_Y:                                ; |
+    %Debug(#$67)                            ; debug
     DEY                                     ; |
     BPL ON_SCREEN_LOOP                      ;/
 
@@ -535,30 +572,32 @@ ON_SCREEN_Y:                                ; |
     SEC                                     ; |
     SBC $1C                                 ; | $01 = sprite y position relative to screen boarder
     STA $01                                 ;/
-    BRA END                                 ; return normally
+    %Debug(#$68)                            ; debug
+    PLA : PLA : PLA
+    RTS                                     ; return normally. use RTS if not in a macro
 
 INVALID:
+    %Debug(#$69)                            ; debug
     PLA                                     ;\  if invalid sreturn from *main gfx routine* subroutine
     PLA                                     ; | (not just this subroutine)
-                                            ;/
-    ;RTS                                    ;
-
+    RTS                                     ;/  use RTS if not in a macro
 END:
 endmacro
 
-;;;;;;;;;;;;;;;;;;
-; Draw tiles     ;
-; bullets & boss ;
-;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Draw tiles                    ;
+; Stores tiles to sprite slots  ;
+; bullets & boss                ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro GraphicsLoop()
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ; if you wish to draw more than one tile
     ; each step between the lines must be repeated
     ;*************************************************************************************
-
     LDX #$FF                                ;
 GraphicsLoop:
     INX                                     ; move to next tile
+    %Debug(#$75)                            ; debug
     LDA $00                                 ;\
     CLC                                     ; | set tile x-position
     ADC Xoffsets,x                          ; |
@@ -582,12 +621,13 @@ GraphicsLoop:
 
     INY                                     ;\
     INY                                     ; |
-    INY                                     ; | move to the next OAM slot index (necessary to draw another tile)
+    INY                                     ; | move to the next sprite slot index (necessary to draw another tile)
     INY                                     ; |
-    CPX #$0F                                ; |\ loop until all tiles are set up
+    CPX #$0F                                ; |\ loop until all tiles are set up                               ; debug
     BNE GraphicsLoop                        ;/ / (currently one 16x16 tile)
     ;*************************************************************************************
 
+    %Debug(#$71)                            ; debug
     LDY #$02                                ;\
     TXA                                     ; | #$02 = drew one tile
     PLX                                     ;/
@@ -602,7 +642,7 @@ endmacro
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro MarioMovement()
 MariosMovementRoutine:
-    STZ $0f
+    STZ $0f                                 ;
     LDA $17                                 ;\
     AND #$08                                ; | if holding B...
     BNE MoveSlowly                          ; | ...enable "focus"

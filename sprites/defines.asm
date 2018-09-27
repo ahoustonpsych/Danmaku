@@ -23,6 +23,9 @@
 
 !timer              = $63               ; How much time has passed (two bytes)
 
+!debug              = $58               ; Debug address
+!scratch            = $7C               ; Scratch address
+
 !bossYOffset        = $0dd9             ; Used for a floaty effect with the boss
 !numOfBullets       = $140b             ; Number of bullets in existence
 !shotBullets        = $140c             ; Misc counter
@@ -32,6 +35,8 @@
 !angle2             = $0f60             ; | These are used for some of the spellcards
 !angle3             = $0f62             ; | (they have no global effect)
 !angle4             = $0f64             ;/
+
+
 
 ; BULLET TABLES
 ; each entry is indexed by the bullet number
@@ -46,7 +51,6 @@
 !bulletYFrac        = $7f1600           ; X subpixel of a bullet
 !bulletType         = $7f1100           ; Bullet color. 0 = bullet doesn't exist
 !bulletInfo         = $7f1200           ; Any extra information about the bullet
-
 
 ;;; Tile offsets and data(?)
 KYoffset:
