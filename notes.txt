@@ -76,6 +76,7 @@ scratch - $7C
 7F - DoneFiring
 A0 - MainRoutineStart
 B0 - End of MainLoop/MainRoutineStart
+BA - Bullet Update Routine
 C0 - End of Bullet Update Routine
 C5 - After Hit Detection
 C6 - After Bullet Graphics

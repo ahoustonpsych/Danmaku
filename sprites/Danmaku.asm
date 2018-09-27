@@ -452,7 +452,6 @@ MainLoopPoint:
 
 UpdateBullets:
     %BulletSpeedPositionUpdate()            ; Updates bullets' speed & position based on acceleration & subpixels
-
     %Debug(#$C0)                            ; debug
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -490,7 +489,7 @@ UpdateBullets:
 SUB_GFX:
     %Debug(#$C8)                            ; debug
 
-    PER DrawReturn-1                        ;
+    ;PER DrawReturn                          ;
     %GetDrawInfo()                          ;\ graphics helper. either returns to GraphicsLoop above
 DrawReturn:
     %Debug(#$60)                            ; |\ debug
@@ -503,9 +502,9 @@ DrawReturn:
                                             ; $00 = sprite x position relative to screen border
                                             ; $01 = sprite y position relative to screen border
     ;PLB                                     ;
-    PER GraphicsReturn-1                    ;
+    ;PER GraphicsReturn                      ;
 
-    PHX                                     ;
+    ;PHX                                     ;
     %GraphicsLoop()                         ;\ draw boss graphics (16x16)
 GraphicsReturn:
     %Debug(#$70)                            ;\ debug

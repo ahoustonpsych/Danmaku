@@ -167,29 +167,29 @@ endmacro
 ; TODO: this would be way less disgusting with a ptr table   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro CallAttackSubroutine(Card)
-        ;%DebugInc()                        ; debug
-        %Debug(<Card>+1)                    ; debug
-        LDA <Card>                          ;\  If not attack 0
-        BNE .notattack0                     ; | Go to attack 1
-        JMP Attack0                         ;/  Else, go to attack 0
+    ;%DebugInc()                            ; debug
+    %Debug(<Card>+1)                        ; debug
+    LDA <Card>                              ;\  If not attack 0
+    BNE .notattack0                         ; | Go to attack 1
+    JMP Attack0                             ;/  Else, go to attack 0
 
-    .notattack0
-        CMP #$01                            ;\  If not attack 1
-        BNE .notattack1                     ; | Go to attack 2
-        JMP Attack1                         ;/  Else, go to attack 1
+.notattack0
+    CMP #$01                                ;\  If not attack 1
+    BNE .notattack1                         ; | Go to attack 2
+    JMP Attack1                             ;/  Else, go to attack 1
 
-    .notattack1
-        CMP #$02                            ;\  If not attack 2
-        BNE .notattack2                     ; | Go to attack 3
-        JMP Attack2                         ;/  Else, go to attack 2
+.notattack1
+    CMP #$02                                ;\  If not attack 2
+    BNE .notattack2                         ; | Go to attack 3
+    JMP Attack2                             ;/  Else, go to attack 2
 
-    .notattack2
-        CMP #$03                            ;\  If not attack 3
-        BNE NoAttacks                       ; | Restart the routine
-        JMP Attack3                         ;/  Else, go to attack 3
+.notattack2
+    CMP #$03                                ;\  If not attack 3
+    BNE NoAttacks                           ; | Restart the routine
+    JMP Attack3                             ;/  Else, go to attack 3
 
-    NoAttacks:
-        JMP MainRoutineStart                ; Skip attack sequence if out of cards
+NoAttacks:
+    JMP MainRoutineStart                    ; Skip attack sequence if out of cards
 endmacro
 
 
@@ -198,6 +198,7 @@ endmacro
 ; based on XY acceleration & subpixels     ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro BulletSpeedPositionUpdate()
+    %Debug(#$BA)                            ;
     LDA !bulletYSpeed,x                     ;
     BMI YSpeedIsNegative                    ;
     CLC                                     ;\
@@ -573,8 +574,8 @@ ON_SCREEN_Y:                                ; |
     SBC $1C                                 ; | $01 = sprite y position relative to screen boarder
     STA $01                                 ;/
     %Debug(#$68)                            ; debug
-    PLA : PLA : PLA
-    RTS                                     ; return normally. use RTS if not in a macro
+    ;RTS                                     ; return normally. use RTS if not in a macro
+    BRA END                                 ;
 
 INVALID:
     %Debug(#$69)                            ; debug
