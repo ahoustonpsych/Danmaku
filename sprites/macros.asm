@@ -87,7 +87,7 @@ endmacro
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; shoot bullet at a specific direction             ;
+; shoot bullet at a specific direction and speed   ;
 ; loads args, finds a slot for the bullet, returns ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro ShootBulletXY(Xspeed,YSpeed,xPos,yPos,xAccel,yAccel,Type,Info)
@@ -425,18 +425,19 @@ endmacro
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; write bullet data to OAM        ;
+; Write bullet data to OAM        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro BulletGraphics()
+    %Debug(#$50)                            ; debug
     LDA !bulletType,x                       ;\ Only process bullets that exist
     BEQ NoGraphicsToShow                    ;/
 
     CMP #$44                                ;\
-    BEQ NoGraphicsToShow                    ; | Protection against overwriting Mario's sprite slots with bullets
+    BEQ NoGraphicsToShow                    ; | Protection against overwriting mario's sprite slots with bullets
     CMP #$45                                ; |
     BEQ NoGraphicsToShow                    ;/
 
-    REP #$10
+    REP #$10                                ;
 
     LDA !bulletXPos,x                       ;\ Update sprite x-pos
     STA $0204,y                             ;/
@@ -444,10 +445,11 @@ macro BulletGraphics()
     LDA !bulletYPos,x                       ;\ Update bullet y-pos
     STA $0205,y                             ;/
 
-    LDA !bulletType,x                       ;\ Update bullet type
+DrawBulletTile:
+    LDA !bulletType,x                       ;\ Update bullet type (tile number)
     STA $0206,y                             ;/
 
-    LDA #$3d                                ;\ Set bullet sprite properties
+    LDA #$3d                                ;\ Palette 0x0E (0b0011101)
     STA $0207,y                             ;/
     INY                                     ;\
     INY                                     ; | Prepare OAM pointer for next bullet (+4 bytes)
@@ -460,13 +462,13 @@ NoGraphicsToShow:
 endmacro
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; write  boss metadata to OAM ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Write boss data to OAM  ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro BossGraphics()
     LDA $0e                                 ;\
-    CMP #$01                                ; |
-    BNE DontShowHitbox                      ;/
+    CMP #$01                                ; | Show mario's hitbox if pressing B
+    BNE DontShowHitbox                      ;/  TODO: remove if too OP. sort of cheating imo
 
     LDA $7e                                 ;\
     CLC                                     ; | Set boss x-position = mario's x-position + 4
@@ -481,14 +483,15 @@ macro BossGraphics()
     LDA #$1f                                ;\ Set boss tile number
     STA !hitBoxOAM+2                        ;/
 
-    LDA #$3d                                ;\ Set boss YXPPCCCT properties
+    ;LDA #$3d                                ;\ Palette 0x0E?
+    LDA #$38                                ;\ Palette 0x0C
     STA !hitBoxOAM+3                        ;/
 
 DontShowHitbox:
-    ;LDY #$00                               ;\
-    ;TXA                                    ; | unused, finished OAM routine.
-    ;JSL $01B7B3                            ;/
-    PLX                                     ;
+    LDY #$02                                ;\
+    TXA                                     ; | finish OAM write
+    PLX                                     ; | #$02 = 16x16 tiles
+    JSL $01B7B3                             ;/
 endmacro
 
 
@@ -585,11 +588,13 @@ INVALID:
 END:
 endmacro
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Draw tiles                    ;
-; Stores tiles to sprite slots  ;
-; bullets & boss                ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Draw Boss Tiles                      ;
+; Stores tile data to OAM slots        ;
+; bullets & boss                       ;
+; OAM Slot Format:                     ;
+; xxxxxxxx yyyyyyyy tttttttt yxppccct  ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro GraphicsLoop()
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ; if you wish to draw more than one tile
@@ -600,31 +605,33 @@ GraphicsLoop:
     INX                                     ; move to next tile
     %Debug(#$75)                            ; debug
     LDA $00                                 ;\
-    CLC                                     ; | set tile x-position
-    ADC Xoffsets,x                          ; |
+    CLC                                     ; | offset x-position by Xoffsets
+    ADC Xoffsets,x                          ; | set tile x-position
     STA $0300,y                             ;/
 
     LDA $01                                 ;\
     CLC                                     ; |
-    ADC Yoffsets,x                          ; |
+    ADC Yoffsets,x                          ; | offset y-position by Yoffsets
     PHY                                     ; | set tile y-position
     LDY !bossYOffset                        ; |\
     CLC                                     ; | |
-    ADC KYoffset,y                          ; | | offset position by KYoffset
+    ADC KYoffset,y                          ; | | offset y-position by KYoffset
     PLY                                     ; | |
     STA $0301,y                             ;/ /
 
-    LDA Tiles,x                             ;\ set tile number
+DrawBossTile:
+    %Debug(#$58)                            ; debug
+    LDA Tiles,x                             ;\ set tile numbers
     STA $0302,y                             ;/
 
-    LDA #$0F                                ; set sprite YXPPCCCT properties
+    LDA #$09                                ; Palette #$0C
     STA $0303,y                             ; (0b00011111)
 
     INY                                     ;\
     INY                                     ; |
     INY                                     ; | move to the next sprite slot index (necessary to draw another tile)
     INY                                     ; |
-    CPX #$0F                                ; |\ loop until all tiles are set up                               ; debug
+    CPX #$0F                                ; |\ loop until all tiles are set up
     BNE GraphicsLoop                        ;/ / (currently one 16x16 tile)
     ;*************************************************************************************
 
@@ -646,18 +653,18 @@ MariosMovementRoutine:
     STZ $0f                                 ;
     LDA $17                                 ;\
     AND #$08                                ; | if holding B...
-    BNE MoveSlowly                          ; | ...enable "focus"
-    LDA #$02                                ; | $0E = pixels to move each frame
-    STA $0e                                 ;/
+    BNE SetFocus                            ; | ...enable "focus"
+    LDA #$02                                ; | $0e = pixels to move each frame
+    STA $0e                                 ;/  Default: 2 pixels per frame
     BRA MovementAdditionEnd                 ;
-MoveSlowly:
+SetFocus:
     LDA #$01                                ;\ focus on
-    STA $0e                                 ;/
+    STA $0e                                 ;/ mario speed = 1 pixel per frame
 
 MovementAdditionEnd:
+CheckRight:
     LDA $15                                 ;\
     AND #$01                                ; | check if pressing right
-    ;CMP #$01                               ; |
     BEQ CheckLeft                           ;/
     REP #$20                                ;
     LDA $0e                                 ;\
@@ -666,10 +673,10 @@ MovementAdditionEnd:
     STA $94                                 ;/
     SEP #$20                                ;
     BRA NowForYSpeed                        ;
+
 CheckLeft:
     LDA $15                                 ;\
     AND #$02                                ; | check if pressing left
-    ;CMP #$02                               ; |
     BEQ ZeroXSpeed                          ;/
     REP #$20                                ;
     LDA $94                                 ;\
@@ -681,9 +688,9 @@ CheckLeft:
 
 ZeroXSpeed:
 NowForYSpeed:
+CheckDown:
     LDA $15                                 ;\
     AND #$04                                ; | check if pressing down
-    ;CMP #$04                               ; |
     BEQ CheckUp                             ;/
     REP #$20                                ;
     LDA $0e                                 ;\
@@ -692,12 +699,11 @@ NowForYSpeed:
     STA $96                                 ;/
     SEP #$20                                ;
     BRA andWereDone                         ;
+
 CheckUp:
     LDA $15                                 ;\
     AND #$08                                ; | check if pressing down
-    ;CMP #$08                               ; |
     BEQ ZeroYSpeed                          ;/
-
     REP #$20
     LDA $96                                 ;\
     SEC                                     ; | subtract 'focus value' from y-position

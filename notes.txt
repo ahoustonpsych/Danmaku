@@ -63,11 +63,17 @@ scratch - $7C
 20 - Attack2
 30 - Attack1
 40 - Attack3
-50 - 
+50 - BulletGraphics
+55 - FoundSlot
+56 - FoundSlot2
+57 - FoundSlot3
+58 - Drawing Boss Tile
+5A - After FindBulletAngle COS JSL
+5B - After FindBulletAngle SIN JSL
 60 - After GetDrawInfo (ERROR)
-65 - Start ON_SCREEN_X
-66 - Start ON_SCREEN_LOOP
-67 - Start ON_SCREEN_Y
+65 - ON_SCREEN_X
+66 - ON_SCREEN_LOOP
+67 - ON_SCREEN_Y
 68 - GetDrawInfo Return Normal
 69 - GetDrawInfo Return Long (Invalid Sprites)
 70 - After GraphicsLoop (before RTS)
@@ -83,4 +89,33 @@ C6 - After Bullet Graphics
 C7 - After Boss Graphics
 C8 - Start Generic Graphics (GetDrawInfo)
 FF - End Boss Main
+
+
+
+NITORI:
+    - boss:
+        - palette 0x0C (0b1100)
+        - tiles:
+    - bullets:
+        - palette 0x0E (0b1101)
+        - tiles:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

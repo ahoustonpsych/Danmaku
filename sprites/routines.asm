@@ -9,20 +9,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;Used to find an empty slot for a bullet.                         ;;;
 ;;;Essentially, call this whenever a shot is fired.                 ;;;
-;;;Use JSR FindBulletSlotXY or the macro below.                     ;;;
 ;;;                                                                 ;;;
-;;;To use, load the initial X speed into $00                        ;;;
-;;;        load the initiay Y speed into $01                        ;;;
-;;;       load the initial x pos.  into $02                         ;;;
-;;;       load the initial y pos.  into $03                         ;;;
-;;;       load the initial x accel into $04                         ;;;
-;;;       load the initial y accel into $05                         ;;;
-;;;       load the initial type    into $06                         ;;;
-;;;       load any  extra  info  into   $07                         ;;;
-;;;                                                                 ;;;
-;;;       This is macro-ified for easier coding.  To use,           ;;;
-;;;       type %ShootBulletXY($00,$01,$02,$03,$04,$05,$06,$07)      ;;;
-;;;       replacing those values with your actual values.           ;;;
+;;;  $00 = initial x-speed                                          ;;;
+;;;  $01 = initial y-speed                                          ;;;
+;;;  $02 = initial x-position                                       ;;;
+;;;  $03 = initial y-position                                       ;;;
+;;;  $04 = initial x-acceleration                                   ;;;
+;;;  $05 = initial y-acceleration                                   ;;;
+;;;  $06 = initial type                                             ;;;
+;;;  $07 = extra info                                               ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 FindBulletSlotXY:
@@ -33,22 +28,24 @@ FindBulletSlotXY:
     LDX #$00                                ;/
 
 FindLoopPoint:
-    INX                                     ;\ \
-    CPX #$44                                ; | |
+    INX                                     ;\
+    CPX #$44                                ; |\
     BEQ BulletSlotNotAvailable              ; | | Protection against overwriting Mario's sprite slots with bullets
     CPX #$45                                ; | |
     BEQ BulletSlotNotAvailable              ; |/
                                             ; |
-    LDA !bulletType,x                       ; | Loop through OAM until a free slot is found
-    BEQ FoundSlot                           ; |
-    CPX #$7f                                ; |\
-    BNE FindLoopPoint                       ; | | Loop until all slots have been checked
+    LDA !bulletType,x                       ; |\ Loop through OAM until a free slot is found
+    BEQ FoundSlot                           ; |/
+                                            ; |
+    CPX !maxSlots                           ; |\
+    BNE FindLoopPoint                       ; | | Loop until all OAM slots have been checked
     BRA NoSlotsAvailable                    ;/ /
 
 FoundSlot:                                  ; This is where bullets are created
     LDA #$40                                ;\ Play sound effect
     STA $1DF9                               ;/
 
+    %Debug(#$55)                            ; debug
     LDA $00                                 ;
     STA !bulletXSpeed,x                     ;
     LDA $01                                 ;
@@ -65,10 +62,11 @@ FoundSlot:                                  ; This is where bullets are created
     STA !bulletType,x                       ;
     LDA $07                                 ;
     STA !bulletInfo,x                       ;
-    LDA #$07                                ;
-    STA !bulletXFrac,x                      ;
-    STA !bulletYFrac,x                      ;
+    LDA #$07                                ;\
+    STA !bulletXFrac,x                      ; | Init X/Y subpixels = #$07
+    STA !bulletYFrac,x                      ;/
 
+FinishOAMPrepare:
 NoSlotsAvailable:
     RTS                                     ;
 
@@ -81,24 +79,19 @@ BulletSlotNotAvailable:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;Used to find an empty slot for a bullet.                                 ;;;
 ;;;Essentially, call this whenever a shot is fired.                         ;;;
-;;;Use JSR FindBulletSlotAngle or the macro below.                          ;;;
 ;;;                                                                         ;;;
-;;;To use, load the initial  speed  into $00                                ;;;
-;;;        load the initiay  angle  into $01 (00 - 01FF)                    ;;;
-;;;       load the initial x pos.  into $03                                 ;;;
-;;;       load the initial y pos.  into $04                                 ;;;
-;;;       load the initial x accel into $05                                 ;;;
-;;;       load the initial y accel into $06                                 ;;;
-;;;       load the initial type    into $07                                 ;;;
-;;;       load any  extra  info  into   $08                                 ;;;
+;;;  $00 = initial speed                                                    ;;;
+;;;  $01 = initial angle   (00 - 01FF)                                      ;;;
+;;;  $03 = initial x-position                                               ;;;
+;;;  $04 = initial y-position                                               ;;;
+;;;  $05 = initial x-acceleration                                           ;;;
+;;;  $06 = initial y-acceleration                                           ;;;
+;;;  $07 = initial type                                                     ;;;
+;;;  $08 = extra info                                                       ;;;
 ;;;                                                                         ;;;
-;;;       This is macro-ified for easier coding.  To use,                   ;;;
-;;;       type %ShootBulletAngle($00,$01,$02,$03,$04,$05,$06,$07)           ;;;
-;;;       replacing those values with your actual values.                   ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 FindBulletSlotAngle:
-
     STZ !numOfBullets                       ;\
     LDA !shotBullets                        ; |
     EOR #$01                                ; |
@@ -108,17 +101,23 @@ FindBulletSlotAngle:
 FindLoopPoint2:
     INX                                     ;\ \
     CPX #$45                                ; | |
-    BEQ BulletSlotNotAvailable2             ; | | Protection against overwriting Mario's sprite slots with bullets
+    BEQ +                                   ; | | Protection against overwriting Mario's sprite slots with bullets
     CPX #$46                                ; | |
-    BEQ BulletSlotNotAvailable2             ; |/
+    BEQ +                                   ; |/
                                             ; |
-    LDA !bulletType,x                       ; | Loop through OAM until a free slot is found
-    BEQ ExitFindLoop2                       ; |
-    CPX #$7F                                ; |\
-    BNE FindLoopPoint2                      ; | | Loop until all slots have been checked
+    LDA !bulletType,x                       ; |\ Loop through OAM until a free slot is found
+    BEQ FoundSlot2                          ; |/
+                                            ; |
+    CPX !maxSlots                           ; |\
+    BNE FindLoopPoint2                      ; | | Loop until all OAM slots have been checked
     BRA NoSlotsAvailable2                   ;/ /
++   BRL BulletSlotNotAvailable2             ;
 
-ExitFindLoop2:                              ; This is where bullets are created.
+NoSlotsAvailable2:
+    RTS                                     ;
+
+FoundSlot2:                                 ; This is where bullets are created.
+    %Debug(#$56)                            ; debug
     LDA #$40                                ;\ Play sound effect
     STA $1df9                               ;/
     LDA $03                                 ;
@@ -129,14 +128,14 @@ ExitFindLoop2:                              ; This is where bullets are created.
     STA !bulletXAccel,x                     ;
     LDA $06                                 ;
     STA !bulletYAccel,x                     ;
-    ;LDA $07                                ;
-    TXA                                     ;
-    LSR                                     ;
-    LSR                                     ;
-    LSR                                     ;
-    LSR                                     ;
-    CLC                                     ;
-    ADC #$0a                                ;
+    LDA $07                                ;
+    ;TXA                                     ;\                                                         
+    ;LSR                                     ; |                                                         
+    ;LSR                                     ; | ??????                                                 
+    ;LSR                                     ; | sets the bullet type to the OAM slot number / 16 + #$0A
+    ;LSR                                     ; |                                                         
+    ;CLC                                     ; |                                                         
+    ;ADC #$0a                                ;/                                                         
     STA !bulletType,x                       ;
     LDA $08                                 ;
     STA !bulletInfo,x                       ;
@@ -145,14 +144,16 @@ ExitFindLoop2:                              ; This is where bullets are created.
     STA !bulletYFrac,x                      ;
 
     JSL SIN                                 ; These come last since they'll destroy the above values otherwise.
+    %Debug(#$5A)                            ; debug
     LDA $03                                 ;
     STA !bulletYSpeed,x                     ;
 
     JSL COS                                 ;
+    %Debug(#$5B)                            ; debug
     LDA $05                                 ;
     STA !bulletXSpeed,x                     ;
 
-NoSlotsAvailable2:
+FinishOAMPrepare2:
     RTS                                     ;
 
 BulletSlotNotAvailable2:
@@ -165,20 +166,15 @@ BulletSlotNotAvailable2:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;Used to find an empty slot for a bullet.                                 ;;;
 ;;;Essentially, call this whenever a shot is fired.                         ;;;
-;;;Use JSR FindBulletSlotAim or the macro below.                            ;;;
 ;;;                                                                         ;;;
-;;;To use, load the initial  speed  into $00                                ;;;
-;;;        load the initiay  angle  into $01 (00 - 01FF)                    ;;;
-;;;       load the initial x pos.  into $03                                 ;;;
-;;;       load the initial y pos.  into $04                                 ;;;
-;;;       load the initial x accel into $05                                 ;;;
-;;;       load the initial y accel into $06                                 ;;;
-;;;       load the initial type    into $07                                 ;;;
-;;;       load any  extra  info  into   $08                                 ;;;
-;;;                                                                         ;;;
-;;;       This is macro-ified for easier coding.  To use,                   ;;;
-;;;       type %ShootBulletAngle($00,$01,$02,$03,$04,$05,$06,$07)           ;;;
-;;;       replacing those values with your actual values.                   ;;;
+;;;  $00 = initial speed                                                    ;;;
+;;;  $01 = initial angle   (00 - 01FF)                                      ;;;
+;;;  $03 = initial x-position                                               ;;;
+;;;  $04 = initial y-position                                               ;;;
+;;;  $05 = initial x-acceleration                                           ;;;
+;;;  $06 = initial y-acceleration                                           ;;;
+;;;  $07 = initial type                                                     ;;;
+;;;  $08 = extra info                                                       ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 FindBulletSlotAim:
@@ -197,14 +193,16 @@ FindLoopPoint3:
     BEQ BulletSlotNotAvailable3             ; | | Protection against overwriting Mario's sprite slots with bullets
     CPX #$46                                ; | |
     BEQ BulletSlotNotAvailable3             ; |/
-                                            ;
-    LDA !bulletType,x                       ;
-    BEQ ExitFindLoop3                       ;
-    CPX #$7f                                ;\
-    BNE FindLoopPoint3                      ; | Loop through OAM until a free slot is found
-    BRA NoSlotsAvailable3                   ;/
+                                            ; |
+    LDA !bulletType,x                       ; |\ Loop through OAM until a free slot is found
+    BEQ FoundSlot3                          ; |/
+                                            ; |
+    CPX !maxSlots                           ; |\
+    BNE FindLoopPoint3                      ; | | Loop until all OAM slots have been checked
+    BRA NoSlotsAvailable3                   ;/ /
 
-ExitFindLoop3:                              ; This is where bullets are created.
+FoundSlot3:                                 ; This is where bullets are created.
+    %Debug(#$57)                            ; debug
     LDA #$40                                ;\
     STA $1DF9                               ;/ play sound effect
     LDA $01                                 ;
@@ -215,14 +213,14 @@ ExitFindLoop3:                              ; This is where bullets are created.
     STA !bulletXAccel,x                     ;
     LDA $04                                 ;
     STA !bulletYAccel,x                     ;
-    ;LDA $05                                ;
-    TXA                                     ;
-    LSR                                     ;
-    LSR                                     ;
-    LSR                                     ;
-    LSR                                     ;
-    CLC                                     ;
-    ADC #$0a                                ;
+    LDA $05                                 ;
+    ;TXA                                     ;\
+    ;LSR                                     ; |
+    ;LSR                                     ; | ??????
+    ;LSR                                     ; | sets the bullet type to the OAM slot number / 16 + #$0A
+    ;LSR                                     ; |
+    ;CLC                                     ; |
+    ;ADC #$0a                                ;/
     STA !bulletType,x                       ;
     LDA $06                                 ;
     STA !bulletInfo,x                       ;
@@ -242,6 +240,7 @@ ExitFindLoop3:                              ; This is where bullets are created.
     LDA $01                                 ;
     STA !bulletXSpeed,x                     ;
 
+FinishOAMPrepare3:
 NoSlotsAvailable3:
     RTS                                     ;
 
@@ -259,7 +258,7 @@ BulletSlotNotAvailable3:
 ; input: accumulator should be set to total speed (x+y), $09 should be bullet index      ;
 ; returns:                                                                               ;
 ;   $00 = y-speed                                                                        ;
-;   $01 = x speed                                                                        ;
+;   $01 = x-speed                                                                        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 CODE_01BF6A:

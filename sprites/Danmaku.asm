@@ -129,7 +129,7 @@ BeginAttacks:
 ; Bullet Shooting/Spellcard Routine               ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    print " Begin Attacks ",pc
+    print "Begin Attacks ",pc
 
 ; all attacks except the second are the same currently
 ;Spellcard0:
@@ -165,15 +165,14 @@ DontEndCard01:
     SEP #$20                                ;\ \
     LDA $13                                 ; | |
     AND #$07                                ; | | shoot bullets every 8 frames
-    ; CMP #$07                              ; | |
     BEQ Spell01PrematureEnd2                ; |/
                                             ; |   Alternate between horizontal/vertical shots every 8 frames
     LDA $13                                 ; |\
     AND #$0f                                ; | | shoot horizontal shot every 16 frames
-    ; CMP #$0f                              ; | |
     BEQ DoHorizontalShot                    ;/ /
 
-    STZ $0D9C
+DoVerticalShot:
+    STZ $0D9C                               ;
     LDA $7e                                 ;\
     CLC                                     ; | Calculate the player's x-position
     ADC #$02                                ; |
@@ -181,21 +180,21 @@ DontEndCard01:
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; First spellcard; set up all of the initial bullet settings
-    ; shoots at the same x-pos as mario (vertical shot)
-    %ShootBulletXY(#$00,#$1D,$0f,#$00,#$00,#$00,#$0A,#$00)
-    BRA SkipThisThingy01
+    ; vertical shot - shoots at the same x-pos as mario
+    ;%ShootBulletXY(#$00,#$1D,$0f,#$00,#$00,#$00,#$08,#$00)
+    BRA SkipThisThingy01                    ;
 
 DoHorizontalShot:
-    STZ $0D9C                               ;\
-    LDA $80                                 ; |
+    STZ $0D9C                               ;
+    LDA $80                                 ;\
     CLC                                     ; | Calculate player's y-position
     ADC #$10                                ; |
     STA $0f                                 ;/  $0F is the player's current y-position, plus two (hitbox I guess)
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
-    ; shoots at the same y-pos as mario (horizontal shot)
-    %ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
-    BRA SkipThisThingy01
+    ; horizontal shot - shoots at the same y-pos as mario
+    ;%ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
+    BRA SkipThisThingy01                    ;
 
 Spell01PrematureEnd2:
     BRL Spell01PrematureEnd
@@ -203,63 +202,61 @@ Spell01PrematureEnd2:
 SkipThisThingy01:
     LDA $13                                 ;\
     AND #$0f                                ; | Shoot once every 16 frames
-    CMP #$0f                                ; |
     BNE Spell01PrematureEnd2                ;/
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; shoot bullets at various speeds every 16 frames
-    %ShootBulletXY(#$00,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)            ;\
-    %ShootBulletXY(#$07,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)            ; |
-    %ShootBulletXY(#$10,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)            ; | Set up the spellcard
-    %ShootBulletXY(#$F8,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)            ; |
-    %ShootBulletXY(#$F0,#$E0,#$7F,#$30,#$00,#$01,#$0A,#$00)            ;/
+    ;%ShootBulletXY(#$00,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ;\
+    ;%ShootBulletXY(#$07,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; |
+    ;%ShootBulletXY(#$10,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; | Set up the spellcard
+    ;%ShootBulletXY(#$F8,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; |
+    ;%ShootBulletXY(#$F0,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ;/
 
     ;ShootBulletAngle(Angle,Speed,xPos,YPos,xAccel,YAccel,Type,Info)
-    ; %ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
-    ; %ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
-    ; %ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
-    ; %ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$0a,#$00)
+    %ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    %ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    %ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    %ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
 
-;     REP #$20
+    REP #$20
 
-;     LDA !angle1                           ;
-;     CLC                                   ;
-;     ADC #$0005                            ; increase angle by #$0005 every shot
-;     STA !angle1                           ;
-;     CMP #$0200                            ; Check if angle overflowed
-;     BCC DontResetAngle1                   ; If not, let it continue
-;     STZ !angle1                           ; Else, reset angle
-; DontResetAngle1:
+    LDA !angle1                             ;\
+    CLC                                     ; |
+    ADC #$0005                              ; | increase angle by #$0005 every shot
+    STA !angle1                             ; |
+    CMP #$0200                              ; |\
+    BCC DontResetAngle1                     ; | | prevent overflow
+    STZ !angle1                             ;/ /
+DontResetAngle1:
 
-;     LDA !angle2                           ;
-;     SEC                                   ;
-;     SBC #$0005                            ; decrease angle by #$0005 every shot
-;     STA !angle2                           ;
-;     BCS DontResetAngle2                   ;
-;     LDA #$01FF                            ;
-;     STA !angle2                           ;
-; DontResetAngle2:
+    LDA !angle2                             ;\
+    SEC                                     ; |
+    SBC #$0005                              ; | decrease angle by #$0005 every shot
+    STA !angle2                             ; |
+    BCS DontResetAngle2                     ; |\
+    LDA #$01FF                              ; | | prevent underflow
+    STA !angle2                             ;/ /
 
+DontResetAngle2:
+    LDA !angle3                             ;\
+    CLC                                     ; |
+    ADC #$0005                              ; | increase angle by #$0005 every shot
+    STA !angle3                             ; |
+    CMP #$0200                              ; |\
+    BCC DontResetAngle3                     ; | | prevent overflow
+    STZ !angle3                             ;/ /
 
-;     LDA !angle3
-;     CLC                                   ;
-;     ADC #$0005                            ; increase angle by #$0005 every shot
-;     STA !angle3
-;     CMP #$0200
-;     BCC DontResetAngle3
-;     STZ !angle3
-; DontResetAngle3:
+DontResetAngle3:
+    LDA !angle4                             ;\
+    SEC                                     ; |
+    SBC #$0005                              ; | decrease angle by #$0005 every shot
+    STA !angle4                             ; |
+    BCS DontResetAngle4                     ; |\
+    LDA #$01ff                              ; | | prevent underflow
+    STA !angle4                             ;/ /
+DontResetAngle4:
 
-;     LDA !angle4
-;     SEC
-;     SBC #$0005                            ; decrease angle by #$0005 every shot
-;     STA !angle4
-;     BCS DontResetAngle4
-;     LDA #$01ff
-;     STA !angle4
-; DontResetAngle4:
-
-;     SEP #$20
+    SEP #$20
 
     ;%ShootBulletAngle(!angle,#$07,#$7F,#$7F,#$FF,#$FF,#$0A,#$00)
     ;%ShootBulletAngle(!angle2,#$07,#$7F,#$7F,#$03,#$03,#$0A,#$00)
@@ -406,7 +403,6 @@ dontRunSpellCards:
 ; Bullet Shooting/Spellcard Routine               ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 DoneFiring:
-    ;%DebugInc()                             ;\ debug
     %Debug(#$7F)                            ;/
     LDA $71                                 ;\
     BNE DontUseSpeedUpThingy                ; |
@@ -441,7 +437,7 @@ MainLoopPoint:
     LDA #$00                                ; |
     DEC                                     ;/
 
-    CPX #$7F                                ;\
+    CPX !maxSlots                           ;\
     BNE .continue                           ; | unused. presumably loop through all slots then process graphics.
     BRA UpdateBullets                       ;/
 
