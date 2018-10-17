@@ -450,6 +450,12 @@ DrawBulletTile:
 
     LDA #$3d                                ;\ Palette 0x0E (0b0011101)
     STA $0207,y                             ;/
+
+    PHY                                     ;\
+    TYA : LSR #2 : TAY                      ; | Tile size
+    LDA #$00 : STA $0420,y                  ; |
+    PLY                                     ;/
+
     INY                                     ;\
     INY                                     ; | Prepare OAM pointer for next bullet (+4 bytes)
     INY                                     ; |
@@ -457,33 +463,29 @@ DrawBulletTile:
     SEP #$10                                ;
 
 NoGraphicsToShow:
-    PHY
-    TYA : LSR #4 : TAY
-    LDA #$00 : STA $0460,y
-    PLY
     ;PLY                                    ;
 endmacro
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Write boss data to OAM  ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-macro BossGraphics()
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Write hitbox data to OAM  ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+macro HitboxGraphics()
     LDA $0e                                 ;\
     CMP #$01                                ; | Show mario's hitbox if pressing B
     BNE DontShowHitbox                      ;/  TODO: remove if too OP. sort of cheating imo
 
     LDA $7e                                 ;\
-    CLC                                     ; | Set boss x-position = mario's x-position + 4
+    CLC                                     ; | Set hitbox x-position = mario's x-position + 4
     ADC #$04                                ; |
     STA !hitBoxOAM                          ;/
 
     LDA $80                                 ;\
-    CLC                                     ; | Set boss y-position = mario's y-position + 16
+    CLC                                     ; | Set hitbox y-position = mario's y-position + 16
     ADC #$10                                ; |
     STA !hitBoxOAM+1                        ;/
 
-    LDA #$1f                                ;\ Set boss tile number
+    LDA #$1f                                ;\ Set hitbox tile number
     STA !hitBoxOAM+2                        ;/
 
     ;LDA #$3d                                ;\ Palette 0x0E?
@@ -491,13 +493,10 @@ macro BossGraphics()
     STA !hitBoxOAM+3                        ;/
 
 DontShowHitbox:
-    PHY
-    TYA
-    LSR #4
-    TAY
-    LDA #$02
-    STA $0420,y
-    PLY
+    PHY                                     ;\
+    TYA : LSR #2 : TAY                      ; | Tile size
+    LDA #$00 : STA $0420,y                  ; |
+    PLY                                     ;/
     ;LDY #$02                                ;\
     ;TXA                                     ; | finish OAM write
     PLX                                     ; | #$02 = 16x16 tiles
@@ -637,6 +636,11 @@ DrawBossTile:
 
     LDA #$09                                ; Palette #$0C
     STA $0303,y                             ; (0b00011111)
+
+    PHY                                     ;\
+    TYA : LSR #2 : TAY                      ; | Tile size
+    LDA #$02 : STA $0460,y                  ; |
+    PLY                                     ;/
 
     INY                                     ;\
     INY                                     ; |

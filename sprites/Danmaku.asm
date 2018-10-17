@@ -49,7 +49,7 @@ INIT:
     STA !stateTimer                         ; Countdown before the boss starts shooting
     PHX                                     ;
     REP #$10                                ;
-    LDX #$00f0                              ;
+    LDX #$0020                              ;
     STX !timer                              ;
     ;STZ $0D9C                              ;
 
@@ -108,9 +108,8 @@ RunSpellCards:
     ;LDA #$01                               ;
     ;STA $19                                ;
 
-    LDA $13                                 ;\  TODO maybe use $14 due to pause abuse
+    LDA $14                                 ;\  TODO maybe use $14 due to pause abuse
     AND #$07                                ; |
-    CMP #$07                                ; |
     BEQ BeginAttacks                        ; | wait 8 frames
     REP #$30                                ; |
     DEC !timer                              ; |
@@ -163,11 +162,11 @@ CardFinished0:
 
 DontEndCard01:
     SEP #$20                                ;\ \
-    LDA $13                                 ; | |
-    AND #$07                                ; | | shoot bullets every 8 frames
+    LDA $14                                 ; | |
+    AND #$20                                ; | | shoot bullets every 8 frames
     BEQ Spell01PrematureEnd2                ; |/
                                             ; |   Alternate between horizontal/vertical shots every 8 frames
-    LDA $13                                 ; |\
+    LDA $14                                 ; |\
     AND #$0f                                ; | | shoot horizontal shot every 16 frames
     BEQ DoHorizontalShot                    ;/ /
 
@@ -181,7 +180,8 @@ DoVerticalShot:
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; First spellcard; set up all of the initial bullet settings
     ; vertical shot - shoots at the same x-pos as mario
-    ;%ShootBulletXY(#$00,#$1D,$0f,#$00,#$00,#$00,#$08,#$00)
+
+    %ShootBulletXY(#$00,#$1D,$0f,#$00,#$00,#$00,#$08,#$00)
     BRA SkipThisThingy01                    ;
 
 DoHorizontalShot:
@@ -193,14 +193,14 @@ DoHorizontalShot:
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; horizontal shot - shoots at the same y-pos as mario
-    ;%ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
+    %ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
     BRA SkipThisThingy01                    ;
 
 Spell01PrematureEnd2:
     BRL Spell01PrematureEnd
 
 SkipThisThingy01:
-    LDA $13                                 ;\
+    LDA $14                                 ;\
     AND #$0f                                ; | Shoot once every 16 frames
     BNE Spell01PrematureEnd2                ;/
 
@@ -215,8 +215,8 @@ SkipThisThingy01:
     ;ShootBulletAngle(Angle,Speed,xPos,YPos,xAccel,YAccel,Type,Info)
     %ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
     %ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
-    %ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
-    %ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    ;%ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    ;%ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
 
     REP #$20
 
@@ -292,7 +292,7 @@ DontEndCard02:
     LDA #$2f                                ;\ Set bullet speed
     STA $0e                                 ;/
 
-    LDA $13                                 ;\
+    LDA $14                                 ;\
     AND #$07                                ; | Shoot bullets every 8 frames
     ; CMP #$07                              ; |
     BEQ Spell02PrematureEnd2                ;/
@@ -304,7 +304,7 @@ WaitLonger:
     LDA #$17                                ;\ Set bullet speed
     STA $0e                                 ;/
 
-    LDA $13                                 ;\
+    LDA $14                                 ;\
     AND #$0f                                ; | Shoot bullets every 16 frames
     ; CMP #$0f                              ; |
     BEQ Spell02PrematureEnd2                ;/
@@ -467,26 +467,26 @@ UpdateBullets:
     %Debug(#$C6)                            ; debug
 
     CPX !maxSlots
-    BEQ BossGraphics
+    BEQ HitboxGraphics
     BRL MainLoopPoint
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; End Bullet Graphics Routine ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Boss Graphics Routine       ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; End Bullet Graphics Routine   ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Hitbox Graphics Routine       ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-BossGraphics:
-    %BossGraphics()                         ;
+HitboxGraphics:
+    %HitboxGraphics()                         ;
     %Debug(#$C7)                            ; debug
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; End Boss Graphics Routine   ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Generic Graphics Routine    ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; End Hitbox Graphics Routine   ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Generic Graphics Routine      ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 SUB_GFX:
     %Debug(#$C8)                            ; debug
 
