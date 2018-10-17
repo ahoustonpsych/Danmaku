@@ -167,8 +167,7 @@ endmacro
 ; TODO: this would be way less disgusting with a ptr table   ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro CallAttackSubroutine(Card)
-    ;%DebugInc()                            ; debug
-    %Debug(<Card>+1)                        ; debug
+    %Debug(#$05)                            ; debug
     LDA <Card>                              ;\  If not attack 0
     BNE .notattack0                         ; | Go to attack 1
     JMP Attack0                             ;/  Else, go to attack 0
@@ -194,8 +193,8 @@ endmacro
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; updates bullet X/Y speeds and positions  ;
-; based on XY acceleration & subpixels     ;
+; update bullet X/Y speeds and positions   ;
+; based on X/Y acceleration/subpixels n    ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro BulletSpeedPositionUpdate()
     %Debug(#$BA)                            ;
@@ -458,6 +457,10 @@ DrawBulletTile:
     SEP #$10                                ;
 
 NoGraphicsToShow:
+    PHY
+    TYA : LSR #4 : TAY
+    LDA #$00 : STA $0460,y
+    PLY
     ;PLY                                    ;
 endmacro
 
@@ -488,10 +491,17 @@ macro BossGraphics()
     STA !hitBoxOAM+3                        ;/
 
 DontShowHitbox:
-    LDY #$02                                ;\
-    TXA                                     ; | finish OAM write
+    PHY
+    TYA
+    LSR #4
+    TAY
+    LDA #$02
+    STA $0420,y
+    PLY
+    ;LDY #$02                                ;\
+    ;TXA                                     ; | finish OAM write
     PLX                                     ; | #$02 = 16x16 tiles
-    JSL $01B7B3                             ;/
+    ;JSL $01B7B3                             ;/
 endmacro
 
 
@@ -596,6 +606,7 @@ endmacro
 ; xxxxxxxx yyyyyyyy tttttttt yxppccct  ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 macro GraphicsLoop()
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ; if you wish to draw more than one tile
     ; each step between the lines must be repeated
@@ -636,11 +647,11 @@ DrawBossTile:
     ;*************************************************************************************
 
     %Debug(#$71)                            ; debug
-    LDY #$02                                ;\
-    TXA                                     ; | #$02 = drew one tile
+    ;LDY #$02                                ;\
+    ;TXA                                     ; | #$02 = drew one tile
     PLX                                     ;/
 
-    JSL $01B7B3                             ; jump to OAM write finish routine
+    ;JSL $01B7B3                             ; jump to OAM write finish routine
 endmacro
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

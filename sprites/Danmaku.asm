@@ -206,8 +206,8 @@ SkipThisThingy01:
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; shoot bullets at various speeds every 16 frames
-    ;%ShootBulletXY(#$00,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ;\
-    ;%ShootBulletXY(#$07,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; |
+    %ShootBulletXY(#$00,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ;\
+    %ShootBulletXY(#$07,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; |
     ;%ShootBulletXY(#$10,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; | Set up the spellcard
     ;%ShootBulletXY(#$F8,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; |
     ;%ShootBulletXY(#$F0,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ;/
@@ -438,7 +438,7 @@ MainLoopPoint:
     DEC                                     ;/
 
     CPX !maxSlots                           ;\
-    BNE .continue                           ; | unused. presumably loop through all slots then process graphics.
+    BNE .continue                           ; | loop through all slots then process graphics.
     BRA UpdateBullets                       ;/
 
 .continue
@@ -466,6 +466,10 @@ UpdateBullets:
     %BulletGraphics()                       ;
     %Debug(#$C6)                            ; debug
 
+    CPX !maxSlots
+    BEQ BossGraphics
+    BRL MainLoopPoint
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End Bullet Graphics Routine ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -473,6 +477,7 @@ UpdateBullets:
 ; Boss Graphics Routine       ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+BossGraphics:
     %BossGraphics()                         ;
     %Debug(#$C7)                            ; debug
 
@@ -487,6 +492,8 @@ SUB_GFX:
 
     ;PER DrawReturn                          ;
     %GetDrawInfo()                          ;\ graphics helper. either returns to GraphicsLoop above
+    ;JSL GDI
+
 DrawReturn:
     %Debug(#$60)                            ; |\ debug
     ;NOP #4                                  ; |/
@@ -506,6 +513,7 @@ GraphicsReturn:
     %Debug(#$70)                            ;\ debug
     ;NOP #4                                  ;/
     RTS                                     ;
+
 
 ;GET_DRAW_INFO:
 ;    PER GET_DRAW_INFO-1                     ;

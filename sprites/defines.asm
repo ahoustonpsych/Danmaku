@@ -31,7 +31,7 @@
 !shotBullets        = $140c             ; Misc counter
 !bulletLocation     = $1763             ; A two byte variable used for hit detection
 
-!maxSlots           = #$3f              ; Maximum number of OAM slots (bullets) to draw
+!maxSlots           = #$7F              ; Maximum number of OAM slots (bullets) to draw
                                         ; The game can handle up to #$7F, although it may lag
 
 !angle1             = $0f5e             ;\
