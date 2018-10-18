@@ -42,9 +42,9 @@ FindLoopPoint:
     BRA NoSlotsAvailable                    ;/ /
 
 FoundSlot:                                  ; This is where bullets are created
-    LDA #$40                                ;\ Play sound effect
-    STA $1DF9                               ;/
-
+    ;LDA #$40                                ;\ Play sound effect
+    ;STA $1DF9                               ;/
+    LDA #$06 : STA $1DFC                    ; fireball sound
     %Debug(#$55)                            ; debug
     LDA $00                                 ;
     STA !bulletXSpeed,x                     ;
@@ -118,8 +118,9 @@ NoSlotsAvailable2:
 
 FoundSlot2:                                 ; This is where bullets are created.
     %Debug(#$56)                            ; debug
-    LDA #$40                                ;\ Play sound effect
-    STA $1df9                               ;/
+    ;LDA #$40                                ;\ Play sound effect
+    ;STA $1df9                               ;/
+    LDA #$06 : STA $1DFC
     LDA $03                                 ;
     STA !bulletXPos,x                       ;
     LDA $04                                 ;
@@ -128,14 +129,8 @@ FoundSlot2:                                 ; This is where bullets are created.
     STA !bulletXAccel,x                     ;
     LDA $06                                 ;
     STA !bulletYAccel,x                     ;
-    LDA $07                                ;
-    ;TXA                                     ;\                                                         
-    ;LSR                                     ; |                                                         
-    ;LSR                                     ; | ??????                                                 
-    ;LSR                                     ; | sets the bullet type to the OAM slot number / 16 + #$0A
-    ;LSR                                     ; |                                                         
-    ;CLC                                     ; |                                                         
-    ;ADC #$0a                                ;/                                                         
+    ;TXA : LSR #4 : CLC : ADC #$0a          ; sets the bullet type to the OAM slot number / 16 + #$0A
+    LDA $07                                 ;
     STA !bulletType,x                       ;
     LDA $08                                 ;
     STA !bulletInfo,x                       ;
@@ -203,8 +198,9 @@ FindLoopPoint3:
 
 FoundSlot3:                                 ; This is where bullets are created.
     %Debug(#$57)                            ; debug
-    LDA #$40                                ;\
-    STA $1DF9                               ;/ play sound effect
+    ;LDA #$40                                ;\
+    ;STA $1DF9                               ;/ play sound effect
+    LDA #$06 : STA $1DFC                    ; fireball sound
     LDA $01                                 ;
     STA !bulletXPos,x                       ;
     LDA $02                                 ;
@@ -213,14 +209,8 @@ FoundSlot3:                                 ; This is where bullets are created.
     STA !bulletXAccel,x                     ;
     LDA $04                                 ;
     STA !bulletYAccel,x                     ;
+    ;TXA : LSR #4 : CLC : ADC #$0a          ; sets the bullet type to OAM slot number / 16 + #$0A
     LDA $05                                 ;
-    ;TXA                                     ;\
-    ;LSR                                     ; |
-    ;LSR                                     ; | ??????
-    ;LSR                                     ; | sets the bullet type to the OAM slot number / 16 + #$0A
-    ;LSR                                     ; |
-    ;CLC                                     ; |
-    ;ADC #$0a                                ;/
     STA !bulletType,x                       ;
     LDA $06                                 ;
     STA !bulletInfo,x                       ;
@@ -228,8 +218,8 @@ FoundSlot3:                                 ; This is where bullets are created.
     STA !bulletXFrac,x                      ;
     STA !bulletYFrac,x                      ;
 
-    ; LDA #$01                              ;
-    ; STA $19                               ;
+    ;LDA #$01                              ;
+    ;STA $19                               ;
     TXA                                     ;
     STA $09                                 ;
 

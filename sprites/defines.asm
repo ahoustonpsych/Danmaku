@@ -31,7 +31,7 @@
 !shotBullets        = $140c             ; Misc counter
 !bulletLocation     = $1763             ; A two byte variable used for hit detection
 
-!maxSlots           = #$7F              ; Maximum number of OAM slots (bullets) to draw
+!maxSlots           = #$5F              ; Maximum number of OAM slots (bullets) to draw
                                         ; The game can handle up to #$7F, although it may lag
 
 !angle1             = $0f5e             ;\
@@ -66,12 +66,18 @@ KYoffset:
 ; Xoffsets:    db $1a,$14,$24,$00,$10,$20,$30,$00,$10,$20,$30,$40,$00,$10,$20,$30
 ; Boss X-Position Offsets
 Xoffsets:
-        db $00,$10,$20,$30,$00,$10,$20,$30,$00,$10,$20,$30,$00,$10,$20,$30
+        db $00,$10,$20,$30
+        db $00,$10,$20,$30
+        db $00,$10,$20,$30
+        db $00,$10,$20,$30
 
 ; Yoffsets:    db $00,$10,$10,$20,$20,$20,$20,$30,$30,$30,$30,$30,$40,$40,$40,$40
 ; Boss Y-Position Offsets
 Yoffsets:
-        db $00,$00,$00,$00,$10,$10,$10,$10,$20,$20,$20,$20,$30,$30,$30,$30
+        db $00,$00,$00,$00
+        db $10,$10,$10,$10
+        db $20,$20,$20,$20
+        db $30,$30,$30,$30
 
 ;Tiles:        db $00,$20,$22,$40,$42,$44,$46,$60,$62,$64,$66,$68,$02,$04,$06,$08
 ; Boss Tiles

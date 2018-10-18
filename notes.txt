@@ -55,7 +55,7 @@ addr - $58
 
 scratch - $7C
 0 - pre-init
-1,2,3,4 = current attack (card) number, minus 1
+05 - CallAttackSuboutine
 0A - main
 0B - init
 0C - main before JSR

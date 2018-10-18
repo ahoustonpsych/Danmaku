@@ -108,9 +108,9 @@ RunSpellCards:
     ;LDA #$01                               ;
     ;STA $19                                ;
 
-    LDA $14                                 ;\  TODO maybe use $14 due to pause abuse
-    AND #$07                                ; |
-    BEQ BeginAttacks                        ; | wait 8 frames
+    LDA $13                                 ;\  TODO maybe use $14 due to pause abuse
+    AND #$0F                                ; |
+    BEQ BeginAttacks                        ; | wait 16 frames
     REP #$30                                ; |
     DEC !timer                              ; |
     SEP #$30                                ;/
@@ -133,8 +133,10 @@ BeginAttacks:
 ; all attacks except the second are the same currently
 ;Spellcard0:
 Attack0:
+;Attack1:
 Attack2:
 Attack3:
+
     %Debug(!currentCard+1*10)               ; debug 10,30,40
     REP #$20                                ;
     LDA !timer                              ;\
@@ -159,19 +161,23 @@ CardFinished0:
     LDA #$f0                                ; This is the amount of time before the boss starts firing again
     STA !stateTimer                         ;
     INC !currentCard                        ; Next spellcard
+    LDA #$01 : STA $1DFC                    ;
+    INC $0DBF                               ;
 
 DontEndCard01:
     SEP #$20                                ;\ \
-    LDA $14                                 ; | |
-    AND #$20                                ; | | shoot bullets every 8 frames
-    BEQ Spell01PrematureEnd2                ; |/
-                                            ; |   Alternate between horizontal/vertical shots every 8 frames
-    LDA $14                                 ; |\
+    LDA $13                                 ; | |
+    AND #$07                                ; | | shoot bullets every 8 frames
+    ;BEQ DoVerticalShot                      ; |/
+    BNE Spell01PrematureEnd2                ; |   Alternate between horizontal/vertical shots every 8 frames
+
+    LDA $13                                 ; |\
     AND #$0f                                ; | | shoot horizontal shot every 16 frames
     BEQ DoHorizontalShot                    ;/ /
 
+
 DoVerticalShot:
-    STZ $0D9C                               ;
+    ;STZ $0D9C                               ;
     LDA $7e                                 ;\
     CLC                                     ; | Calculate the player's x-position
     ADC #$02                                ; |
@@ -180,12 +186,13 @@ DoVerticalShot:
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; First spellcard; set up all of the initial bullet settings
     ; vertical shot - shoots at the same x-pos as mario
-
-    %ShootBulletXY(#$00,#$1D,$0f,#$00,#$00,#$00,#$08,#$00)
+    ;%ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    ;%ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    %ShootBulletXY(#$00,#$0f,$0f,#$00,#$00,#$00,#$08,#$00)
     BRA SkipThisThingy01                    ;
 
 DoHorizontalShot:
-    STZ $0D9C                               ;
+    ;STZ $0D9C                               ;
     LDA $80                                 ;\
     CLC                                     ; | Calculate player's y-position
     ADC #$10                                ; |
@@ -193,30 +200,33 @@ DoHorizontalShot:
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; horizontal shot - shoots at the same y-pos as mario
-    %ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
+    %ShootBulletXY(#$0f,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
     BRA SkipThisThingy01                    ;
 
 Spell01PrematureEnd2:
     BRL Spell01PrematureEnd
 
 SkipThisThingy01:
-    LDA $14                                 ;\
+    LDA $13                                 ;\
     AND #$0f                                ; | Shoot once every 16 frames
     BNE Spell01PrematureEnd2                ;/
 
     ;ShootBulletXY(Xspeed,YSpeed,xPos,YPos,xAccel,YAccel,Type,Info)
     ; shoot bullets at various speeds every 16 frames
-    %ShootBulletXY(#$00,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ;\
-    %ShootBulletXY(#$07,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; |
+    ;%ShootBulletXY(#$00,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ;\
+    ;%ShootBulletXY(#$07,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; |
     ;%ShootBulletXY(#$10,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; | Set up the spellcard
     ;%ShootBulletXY(#$F8,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ; |
     ;%ShootBulletXY(#$F0,#$E0,#$7F,#$30,#$00,#$01,#$08,#$00)            ;/
 
+    LDA #$17                                ;\ Set bullet speed
+    STA $0e                                 ;/
+
     ;ShootBulletAngle(Angle,Speed,xPos,YPos,xAccel,YAccel,Type,Info)
     %ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
     %ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
-    ;%ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
-    ;%ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    %ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    %ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
 
     REP #$20
 
@@ -267,6 +277,8 @@ Spell01PrematureEnd:
 
 ;Spellcard1:
 Attack1:
+    ;LDA #$01
+    ;STA $19
     %Debug(#$30)                            ; debug
     REP #$20                                ;\
     LDA !timer                              ; |
@@ -281,6 +293,9 @@ Attack1:
     LDA #$f0                                ;\ Idle time
     STA !stateTimer                         ;/
     INC !currentCard                        ; Begin next spellcard next frame
+    LDA #$01 : STA $1DFC                    ;
+    INC $0DBF                               ;
+
 
 DontEndCard02:
     REP #$20                                ;\
@@ -292,8 +307,8 @@ DontEndCard02:
     LDA #$2f                                ;\ Set bullet speed
     STA $0e                                 ;/
 
-    LDA $14                                 ;\
-    AND #$07                                ; | Shoot bullets every 8 frames
+    LDA $13                                 ;\
+    AND #$0f                                ; | Shoot bullets every 8 frames
     ; CMP #$07                              ; |
     BEQ Spell02PrematureEnd2                ;/
                                             ;
@@ -304,8 +319,8 @@ WaitLonger:
     LDA #$17                                ;\ Set bullet speed
     STA $0e                                 ;/
 
-    LDA $14                                 ;\
-    AND #$0f                                ; | Shoot bullets every 16 frames
+    LDA $13                                 ;\
+    AND #$1f                                ; | Shoot bullets every 16 frames
     ; CMP #$0f                              ; |
     BEQ Spell02PrematureEnd2                ;/
                                             ;
@@ -321,14 +336,15 @@ SkipThisThingy02:
     STA $0f                                 ;/  $0F is the player's current y-position, plus two (hitbox I guess)
 
     ; shoot horizontal bullets toward mario
-    %ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
+    ;%ShootBulletXY(#$1d,#$00,#$00,$0f,#$00,#$00,#$08,#$00)
 
     ;ShootBulletAngle(Angle,Speed,xPos,YPos,xAccel,YAccel,Type,Info)
-    ;%ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
+    ;%ShootBulletAngle(!angle1,$0e,#$7f,#$30,#$00,#$00,#$0A,#$00)
     ;%ShootBulletAngle(!angle2,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
     ;%ShootBulletAngle(!angle3,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
     ;%ShootBulletAngle(!angle4,$0e,#$7f,#$30,#$00,#$00,#$08,#$00)
 
+;;;;TODO make this less hardcoded
     REP #$20                                ;
     LDA !angle1                             ;\
     CLC                                     ; |
@@ -490,37 +506,14 @@ HitboxGraphics:
 SUB_GFX:
     %Debug(#$C8)                            ; debug
 
-    ;PER DrawReturn                          ;
     %GetDrawInfo()                          ;\ graphics helper. either returns to GraphicsLoop above
-    ;JSL GDI
 
-DrawReturn:
     %Debug(#$60)                            ; |\ debug
-    ;NOP #4                                  ; |/
-    ;RTS                                     ;/ or returns from GFX routine if invalid (offscreen) sprites are detected
 
-    ;PHB : PGK : PLB                         ;
-    ;JSR GET_DRAW_INFO                       ; after returning:
-                                            ; Y = index to sprite OAM ($300)
-                                            ; $00 = sprite x position relative to screen border
-                                            ; $01 = sprite y position relative to screen border
-    ;PLB                                     ;
-    ;PER GraphicsReturn                      ;
-
-    ;PHX                                     ;
     %GraphicsLoop()                         ;\ draw boss graphics (16x16)
 GraphicsReturn:
     %Debug(#$70)                            ;\ debug
-    ;NOP #4                                  ;/
     RTS                                     ;
-
-
-;GET_DRAW_INFO:
-;    PER GET_DRAW_INFO-1                     ;
-;    %GetDrawInfo()                          ;\ graphics helper. either returns to GraphicsLoop above
-;    %Debug(#$60)                            ; |\ debug
-;    NOP #4                                  ; |/
-;    RTS                                     ;/ or returns from GFX routine if invalid (offscreen) sprites are detected
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End Generic Graphics Routine ;
